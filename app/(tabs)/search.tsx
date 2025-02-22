@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { View, TextInput, StyleSheet, FlatList, Text } from 'react-native';
+import { View, TextInput, StyleSheet, FlatList, Text, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import React from 'react';
 
 type Message = {
     id: string;
@@ -60,34 +61,37 @@ export default function SearchScreen() {
     );
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.searchContainer}>
-                <Ionicons name="search-outline" size={20} color="#6b7280" />
-                <TextInput
-                    style={styles.searchInput}
-                    value={query}
-                    onChangeText={setQuery}
-                    placeholder="Ask anything..."
-                    placeholderTextColor="#9ca3af"
-                    onSubmitEditing={handleSearch}
-                    returnKeyType="send"
-                />
-            </View>
-
-            <FlatList
-                data={messages}
-                renderItem={renderMessage}
-                keyExtractor={item => item.id}
-                contentContainerStyle={styles.messagesList}
-                inverted={false}
-            />
-
-            {isTyping && (
-                <View style={styles.typingIndicator}>
-                    <Text style={styles.typingText}>Ara is typing...</Text>
+        <>
+            <StatusBar barStyle="dark-content" />
+            <SafeAreaView style={styles.container}>
+                <View style={styles.searchContainer}>
+                    <Ionicons name="search-outline" size={20} color="#6b7280" />
+                    <TextInput
+                        style={styles.searchInput}
+                        value={query}
+                        onChangeText={setQuery}
+                        placeholder="Ask anything..."
+                        placeholderTextColor="#9ca3af"
+                        onSubmitEditing={handleSearch}
+                        returnKeyType="send"
+                    />
                 </View>
-            )}
-        </SafeAreaView>
+
+                <FlatList
+                    data={messages}
+                    renderItem={renderMessage}
+                    keyExtractor={item => item.id}
+                    contentContainerStyle={styles.messagesList}
+                    inverted={false}
+                />
+
+                {isTyping && (
+                    <View style={styles.typingIndicator}>
+                        <Text style={styles.typingText}>Ara is typing...</Text>
+                    </View>
+                )}
+            </SafeAreaView>
+        </>
     );
 }
 

@@ -1,7 +1,8 @@
-import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, TouchableOpacity, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import React from 'react';
 
 type FeatureCard = {
   id: string;
@@ -38,54 +39,57 @@ export default function ExploreScreen() {
 
   const handleFeaturePress = (feature: FeatureCard) => {
     if (feature.route) {
-      router.push(feature.route);
+      router.push(feature.route as '/chat');
     }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.header}>
-          <Text style={styles.title}>Explore Ara</Text>
-          <Text style={styles.subtitle}>
-            Discover new ways to interact with your AI companion
-          </Text>
-        </View>
-
-        <View style={styles.featuresGrid}>
-          {features.map(feature => (
-            <TouchableOpacity
-              key={feature.id}
-              style={styles.featureCard}
-              onPress={() => handleFeaturePress(feature)}
-            >
-              <View style={styles.iconContainer}>
-                <Ionicons name={feature.icon} size={24} color="#6366f1" />
-              </View>
-              <Text style={styles.featureTitle}>{feature.title}</Text>
-              <Text style={styles.featureDescription}>
-                {feature.description}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.tutorialSection}>
-          <Text style={styles.sectionTitle}>Getting Started</Text>
-          <View style={styles.tutorialCard}>
-            <Text style={styles.tutorialTitle}>Welcome to Ara</Text>
-            <Text style={styles.tutorialText}>
-              Learn how Ara can help you with day-to-day tasks, creative projects,
-              and personal growth. Start with our interactive tutorial to explore
-              all features.
+    <>
+      <StatusBar barStyle="dark-content" />
+      <SafeAreaView style={styles.container}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <View style={styles.header}>
+            <Text style={styles.title}>Explore Ara</Text>
+            <Text style={styles.subtitle}>
+              Discover new ways to interact with your AI companion
             </Text>
-            <TouchableOpacity style={styles.button}>
-              <Text style={styles.buttonText}>Start Tutorial</Text>
-            </TouchableOpacity>
           </View>
-        </View>
-      </ScrollView>
-    </SafeAreaView>
+
+          <View style={styles.featuresGrid}>
+            {features.map(feature => (
+              <TouchableOpacity
+                key={feature.id}
+                style={styles.featureCard}
+                onPress={() => handleFeaturePress(feature)}
+              >
+                <View style={styles.iconContainer}>
+                  <Ionicons name={feature.icon} size={24} color="#6366f1" />
+                </View>
+                <Text style={styles.featureTitle}>{feature.title}</Text>
+                <Text style={styles.featureDescription}>
+                  {feature.description}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          <View style={styles.tutorialSection}>
+            <Text style={styles.sectionTitle}>Getting Started</Text>
+            <View style={styles.tutorialCard}>
+              <Text style={styles.tutorialTitle}>Welcome to Ara</Text>
+              <Text style={styles.tutorialText}>
+                Learn how Ara can help you with day-to-day tasks, creative projects,
+                and personal growth. Start with our interactive tutorial to explore
+                all features.
+              </Text>
+              <TouchableOpacity style={styles.button}>
+                <Text style={styles.buttonText}>Start Tutorial</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    </>
   );
 }
 

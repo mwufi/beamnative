@@ -1,8 +1,9 @@
 import { useState, useRef } from 'react';
-import { View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity, KeyboardAvoidingView, Platform, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import React from 'react';
 
 type Message = {
     id: string;
@@ -81,55 +82,57 @@ export default function ChatScreen() {
     );
 
     return (
-        <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <Ionicons name="chevron-back" size={24} color="#6b7280" />
-                </TouchableOpacity>
-                <View style={styles.headerContent}>
-                    <Text style={styles.headerTitle}>Ara</Text>
-                    {isTyping && <Text style={styles.typingIndicator}>typing...</Text>}
-                </View>
-            </View>
-
-            <FlatList
-                ref={flatListRef}
-                data={messages}
-                renderItem={renderMessage}
-                keyExtractor={item => item.id}
-                contentContainerStyle={styles.messagesList}
-                onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-                onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
-            />
-
-            <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-            >
-                <View style={styles.inputContainer}>
-                    <TextInput
-                        style={styles.input}
-                        value={message}
-                        onChangeText={setMessage}
-                        placeholder="Message Ara..."
-                        placeholderTextColor="#9ca3af"
-                        multiline
-                        maxLength={1000}
-                    />
-                    <TouchableOpacity
-                        style={[styles.sendButton, !message.trim() && styles.sendButtonDisabled]}
-                        onPress={handleSend}
-                        disabled={!message.trim()}
-                    >
-                        <Ionicons
-                            name="send"
-                            size={20}
-                            color={message.trim() ? '#ffffff' : '#9ca3af'}
-                        />
+        <>
+            <StatusBar barStyle="dark-content" />
+            <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
+                <View style={styles.header}>
+                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+                        <Ionicons name="chevron-back" size={24} color="#6b7280" />
                     </TouchableOpacity>
+                    <View style={styles.headerContent}>
+                        <Text style={styles.headerTitle}>Ara</Text>
+                        {isTyping && <Text style={styles.typingIndicator}>typing...</Text>}
+                    </View>
                 </View>
-            </KeyboardAvoidingView>
-        </SafeAreaView>
+
+                <FlatList
+                    ref={flatListRef}
+                    data={messages}
+                    renderItem={renderMessage}
+                    keyExtractor={item => item.id}
+                    contentContainerStyle={styles.messagesList}
+                    onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+                    onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+                />
+
+                <KeyboardAvoidingView
+                    behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                >
+                    <View style={styles.inputContainer}>
+                        <TextInput
+                            style={styles.input}
+                            value={message}
+                            onChangeText={setMessage}
+                            placeholder="Message Ara..."
+                            placeholderTextColor="#9ca3af"
+                            multiline
+                            maxLength={1000}
+                        />
+                        <TouchableOpacity
+                            style={[styles.sendButton, !message.trim() && styles.sendButtonDisabled]}
+                            onPress={handleSend}
+                            disabled={!message.trim()}
+                        >
+                            <Ionicons
+                                name="send"
+                                size={20}
+                                color={message.trim() ? '#ffffff' : '#9ca3af'}
+                            />
+                        </TouchableOpacity>
+                    </View>
+                </KeyboardAvoidingView>
+            </SafeAreaView>
+        </>
     );
 }
 
@@ -142,6 +145,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         padding: 16,
+        paddingTop: Platform.OS === 'ios' ? 8 : 16,
         borderBottomWidth: 1,
         borderBottomColor: '#e5e5e5',
         backgroundColor: '#fff',
