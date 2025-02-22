@@ -1,12 +1,14 @@
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 type FeatureCard = {
   id: string;
   title: string;
   description: string;
   icon: keyof typeof Ionicons.glyphMap;
+  route?: string;
 };
 
 const features: FeatureCard[] = [
@@ -21,6 +23,7 @@ const features: FeatureCard[] = [
     title: 'AI Companion',
     description: 'Chat with your personalized AI companion for deeper conversations.',
     icon: 'person-outline',
+    route: '/chat' as '/chat',
   },
   {
     id: '3',
@@ -31,6 +34,14 @@ const features: FeatureCard[] = [
 ];
 
 export default function ExploreScreen() {
+  const router = useRouter();
+
+  const handleFeaturePress = (feature: FeatureCard) => {
+    if (feature.route) {
+      router.push(feature.route);
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -46,9 +57,7 @@ export default function ExploreScreen() {
             <TouchableOpacity
               key={feature.id}
               style={styles.featureCard}
-              onPress={() => {
-                // Handle feature navigation
-              }}
+              onPress={() => handleFeaturePress(feature)}
             >
               <View style={styles.iconContainer}>
                 <Ionicons name={feature.icon} size={24} color="#6366f1" />

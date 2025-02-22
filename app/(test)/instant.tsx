@@ -15,7 +15,7 @@ const schema = i.schema({
 
 type Color = InstaQLEntity<typeof schema, "colors">;
 
-const db = init({ appId: APP_ID, schema });
+const db = init({ appId: APP_ID, schema, devtool: false });
 
 const selectId = "4d39508b-9ee2-48a3-b70d-8192d9c5a059";
 
