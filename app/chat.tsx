@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
+import ChatHeader from '@/components/ChatHeader';
 
 type Message = {
     id: string;
@@ -54,6 +55,16 @@ export default function ChatScreen() {
         }, 1500);
     };
 
+    const handleCallPress = () => {
+        // Handle voice call
+        console.log('Voice call pressed');
+    };
+
+    const handleVideoPress = () => {
+        // Handle video call
+        console.log('Video call pressed');
+    };
+
     const renderMessage = ({ item }: { item: Message }) => (
         <View style={[
             styles.messageContainer,
@@ -84,16 +95,23 @@ export default function ChatScreen() {
     return (
         <>
             <StatusBar barStyle="dark-content" />
-            <SafeAreaView style={styles.container} edges={['top', 'left', 'right', 'bottom']}>
-                <View style={styles.header}>
-                    <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                        <Ionicons name="chevron-back" size={24} color="#6b7280" />
-                    </TouchableOpacity>
-                    <View style={styles.headerContent}>
-                        <Text style={styles.headerTitle}>Ara</Text>
-                        {isTyping && <Text style={styles.typingIndicator}>typing...</Text>}
-                    </View>
-                </View>
+            <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom', 'top']}>
+                <ChatHeader
+                    profile={{
+                        name: "Ara",
+                        subtitle: isTyping ? "typing..." : undefined
+                    }}
+                    onProfilePress={() => console.log('Profile pressed')}
+                >
+                    <ChatHeader.RightButtons>
+                        <TouchableOpacity onPress={handleCallPress}>
+                            <Ionicons name="call-outline" size={24} color="#6b7280" />
+                        </TouchableOpacity>
+                        <TouchableOpacity onPress={handleVideoPress}>
+                            <Ionicons name="videocam-outline" size={24} color="#6b7280" />
+                        </TouchableOpacity>
+                    </ChatHeader.RightButtons>
+                </ChatHeader>
 
                 <FlatList
                     ref={flatListRef}
