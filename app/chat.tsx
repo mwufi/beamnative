@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React from 'react';
 import ChatHeader from '@/components/ChatHeader';
+import AraProfile from '@/components/AraProfile';
 
 type Message = {
     id: string;
@@ -72,7 +73,7 @@ export default function ChatScreen() {
         ]}>
             {!item.isUser && (
                 <View style={styles.avatar}>
-                    <Ionicons name="person-circle" size={32} color="#6366f1" />
+                    <AraProfile />
                 </View>
             )}
             <View style={[
@@ -101,7 +102,7 @@ export default function ChatScreen() {
                         name: "Ara",
                         subtitle: isTyping ? "typing..." : undefined
                     }}
-                    onProfilePress={() => console.log('Profile pressed')}
+                    onProfilePress={() => router.push('/chat/details')}
                 >
                     <ChatHeader.RightButtons>
                         <TouchableOpacity onPress={handleCallPress}>

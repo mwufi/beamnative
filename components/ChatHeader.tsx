@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import AraProfile from '@/components/AraProfile';
 
 type Profile = {
     name: string;
@@ -41,17 +42,7 @@ const ChatHeader = ({ profile, onProfilePress, children }: ChatHeaderProps) => {
                 onPress={onProfilePress}
                 disabled={!onProfilePress}
             >
-                {profile.profilePic ? (
-                    <Image
-                        source={{ uri: profile.profilePic }}
-                        style={styles.profilePic}
-                    />
-                ) : (
-                    <View style={styles.profilePicPlaceholder}>
-                        <Ionicons name="person-circle" size={32} color="#6366f1" />
-                    </View>
-                )}
-
+                <AraProfile size={36} style={styles.profilePic} />
                 <View style={styles.headerContent}>
                     <Text style={styles.headerTitle}>{profile.name}</Text>
                     {profile.subtitle && (
@@ -87,18 +78,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     profilePic: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        marginRight: 12,
-    },
-    profilePicPlaceholder: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: '#e0e7ff',
-        justifyContent: 'center',
-        alignItems: 'center',
         marginRight: 12,
     },
     headerContent: {
