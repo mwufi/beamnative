@@ -2,6 +2,7 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { TutorialCard } from '@/components/cards';
 
 interface Card {
   id: number;
@@ -37,7 +38,6 @@ const sampleCards: Card[] = [
 
 export default function HomeScreen() {
   const router = useRouter();
-  const userName = "Alex"; // This would come from user context/state
 
   return (
     <SafeAreaView style={styles.container}>
@@ -78,66 +78,18 @@ export default function HomeScreen() {
         </View>
 
         <View style={styles.cardsContainer}>
-          {sampleCards.map((card) => {
-            if (card.type === "chat") {
-              return (
-                <TouchableOpacity
-                  key={card.id}
-                  style={styles.chatCard}
-                  onPress={() => router.push('/chat')}
-                >
-                  <View style={styles.chatIconContainer}>
-                    <Ionicons name="barbell-outline" size={24} color="#000" />
-                  </View>
-                  <View style={styles.chatContent}>
-                    <Text style={styles.chatTitle}>{card.title}</Text>
-                    <Text style={styles.chatDescription}>{card.description}</Text>
-                  </View>
-                  <TouchableOpacity style={styles.startButton}>
-                    <Text style={styles.startButtonText}>Start practice</Text>
-                  </TouchableOpacity>
-                </TouchableOpacity>
-              );
-            }
+          {/* Empty state */}
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>You have 0 minutes with Ara!</Text>
+            <Text style={styles.emptyDescription}>Start your journey by exploring what Ara can do for you.</Text>
+          </View>
 
-            if (card.type === "course") {
-              return (
-                <TouchableOpacity
-                  key={card.id}
-                  style={styles.courseCard}
-                  onPress={() => router.push('/(tabs)/explore')}
-                >
-                  <View style={styles.courseImageContainer}>
-                    <MaterialCommunityIcons name="home" size={48} color="#2563eb" />
-                  </View>
-                  <View style={styles.courseContent}>
-                    <Text style={styles.courseSubtitle}>{card.subtitle}</Text>
-                    <Text style={styles.courseTitle}>{card.title}</Text>
-                    <Text style={styles.courseDescription}>{card.description}</Text>
-                    <View style={styles.progressBarContainer}>
-                      <View
-                        style={[
-                          styles.progressBar,
-                          { width: `${(card.progress || 0) * 100}%` }
-                        ]}
-                      />
-                    </View>
-                  </View>
-                </TouchableOpacity>
-              );
-            }
-
-            return (
-              <TouchableOpacity
-                key={card.id}
-                style={styles.infoCard}
-                onPress={() => { }}
-              >
-                <Text style={styles.infoTitle}>{card.title}</Text>
-                <Text style={styles.infoDescription}>{card.description}</Text>
-              </TouchableOpacity>
-            );
-          })}
+          {/* Getting Started Card */}
+          <TutorialCard
+            title="Welcome to Ara"
+            description="Learn how Ara can help you with day-to-day tasks, creative projects, and personal growth. Start with our interactive tutorial to explore all features."
+            onPress={() => router.push('/(tabs)/explore')}
+          />
         </View>
       </ScrollView>
     </SafeAreaView>
@@ -212,108 +164,20 @@ const styles = StyleSheet.create({
     padding: 20,
     gap: 16,
   },
-  chatCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#f3f4f6',
-    marginBottom: 16,
-  },
-  chatIconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#E8FB60',
-    justifyContent: 'center',
+  emptyState: {
     alignItems: 'center',
-    marginBottom: 12,
+    padding: 20,
+    marginBottom: 20,
   },
-  chatContent: {
-    marginBottom: 16,
-  },
-  chatTitle: {
+  emptyTitle: {
     fontSize: 20,
     fontWeight: '600',
     color: '#000',
-    marginBottom: 4,
+    marginBottom: 8,
   },
-  chatDescription: {
+  emptyDescription: {
     fontSize: 16,
     color: '#6b7280',
-  },
-  startButton: {
-    backgroundColor: '#E8FB60',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  startButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
-  },
-  courseCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    overflow: 'hidden',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#f3f4f6',
-  },
-  courseImageContainer: {
-    width: '100%',
-    height: 160,
-    backgroundColor: '#f3f4f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  courseContent: {
-    padding: 16,
-  },
-  courseSubtitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#2563eb',
-    marginBottom: 4,
-  },
-  courseTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#000',
-    marginBottom: 4,
-  },
-  courseDescription: {
-    fontSize: 16,
-    color: '#6b7280',
-    marginBottom: 16,
-  },
-  progressBarContainer: {
-    height: 4,
-    backgroundColor: '#f3f4f6',
-    borderRadius: 2,
-  },
-  progressBar: {
-    height: '100%',
-    backgroundColor: '#22c55e',
-    borderRadius: 2,
-  },
-  infoCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#f3f4f6',
-    marginBottom: 16,
-  },
-  infoTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#000',
-    marginBottom: 4,
-  },
-  infoDescription: {
-    fontSize: 16,
-    color: '#6b7280',
+    textAlign: 'center',
   },
 });

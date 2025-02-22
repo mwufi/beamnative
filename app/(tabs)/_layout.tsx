@@ -28,12 +28,12 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="search"
+        name="chat"
         options={{
-          title: 'Search',
+          title: 'Chat',
           tabBarIcon: ({ color }) => (
             <View style={{ marginTop: 3 }}>
-              <Ionicons name="search-outline" size={24} color={color} />
+              <Ionicons name="chatbubble-outline" size={24} color={color} />
             </View>
           ),
         }}
