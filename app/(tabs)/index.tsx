@@ -3,6 +3,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { TutorialCard } from '@/components/cards';
+import { db } from "@/util/instant";
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -13,6 +14,9 @@ function getGreeting() {
 
 export default function HomeScreen() {
   const router = useRouter();
+  const { isLoading, user, error } = db.useAuth();
+
+  const email = user?.email;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -42,6 +46,13 @@ export default function HomeScreen() {
             description="Your AI assistant for getting things done. Chat with Ara to manage tasks, get answers, or explore new ideas."
             ctaText="Start Chatting"
             onPress={() => router.push('/chat')}
+          />
+
+          <TutorialCard
+            title="Debug Info"
+            description={`User email: ${email || 'Not logged in'}\nLoading: ${isLoading}\nError: ${error?.message || 'No error'}\nUser: ${JSON.stringify(user)}`}
+            ctaText={user ? "Log out" : "Log in"}
+            onPress={() => user ? db.auth.signOut() : router.push('/login')}
           />
         </View>
       </ScrollView>
