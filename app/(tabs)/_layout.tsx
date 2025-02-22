@@ -13,7 +13,7 @@ export default function TabLayout() {
         },
         tabBarActiveTintColor: '#6366f1',
         tabBarInactiveTintColor: '#9ca3af',
-        headerShown: false,
+        headerShown: false
       }}
     >
       <Tabs.Screen
@@ -23,17 +23,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <View style={{ marginTop: 3 }}>
               <Ionicons name="home-outline" size={24} color={color} />
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="chat"
-        options={{
-          title: 'Chat',
-          tabBarIcon: ({ color }) => (
-            <View style={{ marginTop: 3 }}>
-              <Ionicons name="chatbubble-outline" size={24} color={color} />
             </View>
           ),
         }}
