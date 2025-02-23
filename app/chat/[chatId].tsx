@@ -221,7 +221,7 @@ export default function ChatScreen() {
                     className="p-4"
                     contentContainerStyle={{ gap: 16 }}
                     onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-                    onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
+                    onLayout={() => flatListRef.current?.scrollToEnd({ animated: false })}
                 />
 
                 <KeyboardAvoidingView
