@@ -64,8 +64,12 @@ export default function ChatScreen() {
         const assistantId = "f9d13874-aeaf-4906-b9ee-121c1d947a24";
 
         if (!conversation) {
-            console.log("conversation", conversation);
             console.log("no conversation found");
+            return;
+        }
+
+        if (!userProfile?.id) {
+            console.log("no userProfile found");
             return;
         }
 
