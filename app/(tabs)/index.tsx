@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { TutorialCard } from '@/components/cards';
 import { db } from "@/util/instant";
+import { useUser } from '@/hooks/useUser';
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -14,7 +15,7 @@ function getGreeting() {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { isLoading, user, error } = db.useAuth();
+  const { isLoading, user, error, userProfile } = useUser();
 
   const email = user?.email;
 
@@ -50,7 +51,7 @@ export default function HomeScreen() {
 
           <TutorialCard
             title="Debug Info"
-            description={`User email: ${email || 'Not logged in'}\nLoading: ${isLoading}\nError: ${error?.message || 'No error'}\nUser: ${JSON.stringify(user)}`}
+            description={`User email: ${email || 'Not logged in'}\nLoading: ${isLoading}\nError: ${error?.message || 'No error'}\nUser: ${JSON.stringify(user)}\nUser Profile: ${JSON.stringify(userProfile)}`}
             ctaText={user ? "Log out" : "Log in"}
             onPress={() => user ? db.auth.signOut() : router.push('/login')}
           />
