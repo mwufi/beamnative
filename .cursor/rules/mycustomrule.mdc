@@ -1,0 +1,13 @@
+---
+description: This rule is useful for React Native Development
+globs: 
+---
+
+# Your rule content
+
+- You can @ files here
+- You can use markdown but dont have to
+
+When creating components, put them in app/components, and import them like @/app/components/*
+
+This is so that Tailwind works

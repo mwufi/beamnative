@@ -8,6 +8,7 @@ import 'react-native-reanimated';
 import * as SplashScreen from 'expo-splash-screen';
 import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import '@/global.css';
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
