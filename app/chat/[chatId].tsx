@@ -1,6 +1,6 @@
 import { useLocalSearchParams } from "expo-router";
 import { useState, useRef } from 'react';
-import { View, Text, TextInput, StyleSheet, FlatList, TouchableOpacity, KeyboardAvoidingView, Platform, StatusBar } from 'react-native';
+import { View, Text, TextInput, FlatList, TouchableOpacity, KeyboardAvoidingView, Platform, StatusBar } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -170,37 +170,10 @@ export default function ChatScreen() {
         console.log('Video call pressed');
     };
 
-    const renderMessage = ({ item }: { item: Message }) => (
-        <View style={[
-            styles.messageContainer,
-            item.isUser ? styles.userMessageContainer : styles.aiMessageContainer
-        ]}>
-            {!item.isUser && (
-                <View style={styles.avatar}>
-                    <AraProfile />
-                </View>
-            )}
-            <View style={[
-                styles.messageBubble,
-                item.isUser ? styles.userMessage : styles.aiMessage
-            ]}>
-                <Text style={[
-                    styles.messageText,
-                    item.isUser ? styles.userMessageText : styles.aiMessageText
-                ]}>
-                    {item.text}
-                </Text>
-                <Text style={styles.timestamp}>
-                    {item.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </Text>
-            </View>
-        </View>
-    );
-
     return (
         <>
             <StatusBar barStyle="dark-content" />
-            <SafeAreaView style={styles.container} edges={['left', 'right', 'bottom', 'top']}>
+            <SafeAreaView className="flex-1 bg-white" edges={['left', 'right', 'bottom', 'top']}>
                 <ChatHeader
                     profile={{
                         name: "Ara",
@@ -221,9 +194,32 @@ export default function ChatScreen() {
                 <FlatList
                     ref={flatListRef}
                     data={messages}
-                    renderItem={renderMessage}
+                    renderItem={({ item }) => (
+                        <View className={`flex-row mb-4 items-end ${item.isUser ? 'justify-end' : 'justify-start'}`}>
+                            {!item.isUser && (
+                                <View className="mr-2 mb-1">
+                                    <AraProfile />
+                                </View>
+                            )}
+                            <View
+                                className={`max-w-[75%] rounded-2xl p-3 
+                                ${item.isUser
+                                        ? 'bg-indigo-500 rounded-br-sm'
+                                        : 'bg-gray-100 rounded-bl-sm'}`}
+                            >
+                                <Text className={`text-base leading-5 
+                                    ${item.isUser ? 'text-white' : 'text-gray-800'}`}>
+                                    {item.text}
+                                </Text>
+                                <Text className="text-xs text-gray-400 mt-1 self-end">
+                                    {item.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </Text>
+                            </View>
+                        </View>
+                    )}
                     keyExtractor={item => item.id}
-                    contentContainerStyle={styles.messagesList}
+                    className="p-4"
+                    contentContainerStyle={{ gap: 16 }}
                     onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
                     onLayout={() => flatListRef.current?.scrollToEnd({ animated: true })}
                 />
@@ -231,9 +227,9 @@ export default function ChatScreen() {
                 <KeyboardAvoidingView
                     behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 >
-                    <View style={styles.inputContainer}>
+                    <View className="flex-row p-3 border-t border-gray-200 bg-white items-center">
                         <TextInput
-                            style={styles.input}
+                            className="flex-1 bg-gray-100 rounded-2xl px-4 py-2.5 pr-11 text-base text-gray-800 min-h-[40px] max-h-[120px]"
                             value={message}
                             onChangeText={setMessage}
                             placeholder="Message Ara..."
@@ -242,7 +238,8 @@ export default function ChatScreen() {
                             maxLength={1000}
                         />
                         <TouchableOpacity
-                            style={[styles.sendButton, !message.trim() && styles.sendButtonDisabled]}
+                            className={`absolute right-5 w-8 h-8 rounded-full justify-center items-center
+                                ${message.trim() ? 'bg-indigo-500' : 'bg-gray-200'}`}
                             onPress={handleSend}
                             disabled={!message.trim()}
                         >
@@ -257,117 +254,4 @@ export default function ChatScreen() {
             </SafeAreaView>
         </>
     );
-}
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#fff',
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: 16,
-        paddingTop: Platform.OS === 'ios' ? 8 : 16,
-        borderBottomWidth: 1,
-        borderBottomColor: '#e5e5e5',
-        backgroundColor: '#fff',
-    },
-    backButton: {
-        marginRight: 12,
-    },
-    headerContent: {
-        flex: 1,
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#1f2937',
-    },
-    typingIndicator: {
-        fontSize: 12,
-        color: '#6b7280',
-        marginTop: 2,
-    },
-    messagesList: {
-        padding: 16,
-        gap: 16,
-    },
-    messageContainer: {
-        flexDirection: 'row',
-        marginBottom: 16,
-        alignItems: 'flex-end',
-    },
-    userMessageContainer: {
-        justifyContent: 'flex-end',
-    },
-    aiMessageContainer: {
-        justifyContent: 'flex-start',
-    },
-    avatar: {
-        marginRight: 8,
-        marginBottom: 4,
-    },
-    messageBubble: {
-        maxWidth: '75%',
-        borderRadius: 20,
-        padding: 12,
-    },
-    userMessage: {
-        backgroundColor: '#6366f1',
-        borderBottomRightRadius: 4,
-    },
-    aiMessage: {
-        backgroundColor: '#f3f4f6',
-        borderBottomLeftRadius: 4,
-    },
-    messageText: {
-        fontSize: 16,
-        lineHeight: 20,
-    },
-    userMessageText: {
-        color: '#fff',
-    },
-    aiMessageText: {
-        color: '#1f2937',
-    },
-    timestamp: {
-        fontSize: 10,
-        color: '#9ca3af',
-        marginTop: 4,
-        alignSelf: 'flex-end',
-    },
-    inputContainer: {
-        flexDirection: 'row',
-        padding: 12,
-        borderTopWidth: 1,
-        borderTopColor: '#e5e5e5',
-        backgroundColor: '#fff',
-        alignItems: 'center',
-    },
-    input: {
-        flex: 1,
-        backgroundColor: '#f3f4f6',
-        borderRadius: 20,
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-        paddingRight: 44,
-        fontSize: 16,
-        maxHeight: 120,
-        color: '#1f2937',
-        minHeight: 40,
-    },
-    sendButton: {
-        position: 'absolute',
-        right: 20,
-        width: 32,
-        height: 32,
-        backgroundColor: '#6366f1',
-        borderRadius: 16,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    sendButtonDisabled: {
-        backgroundColor: '#e5e7eb',
-    },
-}); 
+} 

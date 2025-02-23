@@ -44,11 +44,12 @@ export default function MenuSection() {
                     className="flex-row items-center justify-between py-4 px-4 border-b border-gray-100"
                     onPress={item.onPress}
                 >
-                    <View className="flex-row items-center space-x-3">
+                    <View className="flex-row items-center">
                         <Ionicons
                             name={item.icon}
                             size={24}
                             color={item.color || '#6b7280'}
+                            className="pr-3"
                         />
                         <Text className={`text-base ${item.color ? '' : 'text-gray-800'}`} style={item.color ? { color: item.color } : undefined}>
                             {item.label}

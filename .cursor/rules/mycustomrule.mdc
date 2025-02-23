@@ -11,3 +11,38 @@ globs:
 When creating components, put them in app/components, and import them like @/app/components/*
 
 This is so that Tailwind works
+
+
+## Spacing
+
+Sometimes, putting things on the View does not work.
+
+React Native styling is much more restrictive than the web. This code will work on the web, but not on React Native:
+
+
+
+                    <View className="flex-row items-center space-x-3">
+                        <Ionicons
+                            name={item.icon}
+                            size={24}
+                            color={item.color || '#6b7280'}
+                        />
+                        <Text className={`text-base ${item.color ? '' : 'text-gray-800'}`} style={item.color ? { color: item.color } : undefined}>
+                            {item.label}
+                        </Text>
+                    </View>
+
+To fix this, we can remove space-x-3 and space it out by adding padding manually to the icon instead.
+                  +          className="pr-3"
+
+Another common gotcha: 
+
+Colors do not cascade from views! So instead of doing this, prefer putting the color modifier on the text directly
+
+export function App() {
+  return (
+    <View className="text-red-500">
+      <Text>Hello, World!</Text>
+    </View>
+  );
+}
