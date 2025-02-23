@@ -206,7 +206,7 @@ export default function ChatScreen() {
                         name: "Ara",
                         subtitle: isTyping ? "typing..." : undefined
                     }}
-                    onProfilePress={() => router.push('/chat/details')}
+                    onProfilePress={() => router.push(`/chat/${chatId}/details`)}
                 >
                     <ChatHeader.RightButtons>
                         <TouchableOpacity onPress={handleCallPress}>
