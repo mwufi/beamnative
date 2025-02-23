@@ -1,8 +1,8 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-
-export function StreakHeader() {
+import React from 'react';
+export default function StreakHeader() {
     const router = useRouter();
 
     return (

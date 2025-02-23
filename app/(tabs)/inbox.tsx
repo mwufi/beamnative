@@ -1,85 +1,166 @@
 import React, { useState } from 'react';
-import { View, FlatList, StyleSheet, StatusBar, Text, TouchableOpacity, TextInput } from 'react-native';
+import { View, FlatList, StyleSheet, StatusBar, Text, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import ChatListItem from '@/components/ChatListItem';
+import AraProfile from '@/components/AraProfile';
 
-// Temporary mock data - replace with real data later
-const suggestedBots = [
+// Active chats shown in stories-like view
+const activeChats = [
     {
-        id: 'creative',
-        name: 'Creative Assistant',
-        description: 'Writing, art, and creative projects',
-        icon: 'brush-outline',
+        id: 'new',
+        type: 'new',
+        name: 'New Chat',
+        icon: 'add-outline',
+    },
+    {
+        id: 'ara',
+        type: 'bot',
+        name: 'Ara',
+        isActive: true,
+        activeTask: 'Essay Writing',
     },
     {
         id: 'study',
+        type: 'bot',
         name: 'Study Buddy',
-        description: 'Homework help and exam prep',
-        icon: 'school-outline',
+        isActive: true,
+        activeTask: 'Finals Prep',
     },
     {
-        id: 'coding',
-        name: 'Code Helper',
-        description: 'Programming and debugging help',
-        icon: 'code-slash-outline',
+        id: 'creative',
+        type: 'bot',
+        name: 'Creative',
+        activeTask: 'Writing Story',
     },
 ];
 
-const recentChats = [
+type Chat = {
+    id: string;
+    name: string;
+    lastMessage: string;
+    timestamp: string;
+    isBot: boolean;
+    isActive?: boolean;
+    unreadCount?: number;
+    isPinned?: boolean;
+};
+
+const initialChats: Chat[] = [
     {
         id: '1',
-        name: 'Ara',
-        lastMessage: 'How can I help you today?',
-        timestamp: '2m ago',
+        name: 'Essay Helper',
+        lastMessage: 'Let\'s continue working on your college application essay',
+        timestamp: '5m ago',
         isBot: true,
+        isActive: true,
     },
     {
         id: '2',
-        name: 'Study Buddy',
-        lastMessage: 'Let\'s practice for the exam!',
-        timestamp: '1h ago',
+        name: 'Study Plan',
+        lastMessage: 'Here\'s your personalized study schedule for finals',
+        timestamp: '2h ago',
         isBot: true,
+        unreadCount: 2,
     },
 ];
 
-const savedChats = [
-    {
-        id: '3',
-        name: 'Essay Helper',
-        lastMessage: 'Your essay outline is ready',
-        timestamp: '2d ago',
-        isBot: true,
-    },
-];
-
-type SuggestedBot = {
-    id: string;
-    name: string;
-    description: string;
-    icon: keyof typeof Ionicons.glyphMap;
-};
+type ActiveChat = typeof activeChats[0];
 
 export default function InboxScreen() {
     const [searchQuery, setSearchQuery] = useState('');
+    const [chats, setChats] = useState<Chat[]>(initialChats);
 
-    const renderSuggestedBot = ({ item }: { item: SuggestedBot }) => (
-        <TouchableOpacity style={styles.suggestedBot}>
-            <View style={styles.botIconContainer}>
-                <Ionicons name={item.icon} size={24} color="#6366f1" />
+    const handlePin = async (chatId: string) => {
+        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        setChats(prevChats =>
+            prevChats.map(chat =>
+                chat.id === chatId
+                    ? { ...chat, isPinned: !chat.isPinned }
+                    : chat
+            )
+        );
+    };
+
+    const handleArchive = (chatId: string) => {
+        Alert.alert(
+            'Archive Chat',
+            'Are you sure you want to archive this chat?',
+            [
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                },
+                {
+                    text: 'Archive',
+                    style: 'destructive',
+                    onPress: async () => {
+                        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                        setChats(prevChats =>
+                            prevChats.filter(chat => chat.id !== chatId)
+                        );
+                    },
+                },
+            ]
+        );
+    };
+
+    const handleMore = (chatId: string) => {
+        // Implement more options menu
+        Alert.alert(
+            'More Options',
+            'What would you like to do?',
+            [
+                {
+                    text: 'Mark as Unread',
+                    onPress: () => {
+                        setChats(prevChats =>
+                            prevChats.map(chat =>
+                                chat.id === chatId
+                                    ? { ...chat, unreadCount: chat.unreadCount ? 0 : 1 }
+                                    : chat
+                            )
+                        );
+                    },
+                },
+                {
+                    text: 'Mute Notifications',
+                    onPress: () => {/* Implement mute */ },
+                },
+                {
+                    text: 'Cancel',
+                    style: 'cancel',
+                },
+            ]
+        );
+    };
+
+    const renderActiveChat = ({ item }: { item: ActiveChat }) => (
+        <TouchableOpacity style={styles.activeChat}>
+            <View style={[
+                styles.activeChatAvatar,
+                item.type === 'new' && styles.newChatAvatar,
+                item.isActive && styles.activeChatAvatarActive
+            ]}>
+                {item.type === 'new' ? (
+                    <Ionicons name="add" size={24} color="#6366f1" />
+                ) : (
+                    <AraProfile size={52} />
+                )}
+                {item.isActive && (
+                    <View style={styles.activeIndicator} />
+                )}
             </View>
-            <View style={styles.botInfo}>
-                <Text style={styles.botName}>{item.name}</Text>
-                <Text style={styles.botDescription}>{item.description}</Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#9ca3af" />
+            <Text style={styles.activeChatName} numberOfLines={1}>
+                {item.name}
+            </Text>
+            {item.activeTask && (
+                <Text style={styles.activeChatTask} numberOfLines={1}>
+                    {item.activeTask}
+                </Text>
+            )}
         </TouchableOpacity>
-    );
-
-    const renderSectionHeader = (title: string) => (
-        <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>{title}</Text>
-        </View>
     );
 
     return (
@@ -88,7 +169,7 @@ export default function InboxScreen() {
             <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
                 {/* Header */}
                 <View style={styles.header}>
-                    <Text style={styles.headerTitle}>Messages</Text>
+                    <Text style={styles.headerTitle}>Chats</Text>
                     <View style={styles.headerButtons}>
                         <TouchableOpacity style={styles.iconButton}>
                             <Ionicons name="create-outline" size={24} color="#1f2937" />
@@ -112,27 +193,26 @@ export default function InboxScreen() {
                     data={[]}
                     ListHeaderComponent={
                         <>
-                            {/* Suggested Bots */}
-                            {renderSectionHeader('Suggested Assistants')}
+                            {/* Active Chats */}
                             <FlatList
                                 horizontal
-                                data={suggestedBots}
-                                renderItem={renderSuggestedBot}
+                                data={activeChats}
+                                renderItem={renderActiveChat}
                                 keyExtractor={item => item.id}
                                 showsHorizontalScrollIndicator={false}
-                                contentContainerStyle={styles.suggestedBotsContainer}
+                                contentContainerStyle={styles.activeChatsContainer}
                             />
 
                             {/* Recent Chats */}
-                            {renderSectionHeader('Recent')}
-                            {recentChats.map(chat => (
-                                <ChatListItem key={chat.id} {...chat} />
-                            ))}
-
-                            {/* Saved Chats */}
-                            {renderSectionHeader('Saved')}
-                            {savedChats.map(chat => (
-                                <ChatListItem key={chat.id} {...chat} />
+                            <View style={styles.divider} />
+                            {chats.map(chat => (
+                                <ChatListItem
+                                    key={chat.id}
+                                    {...chat}
+                                    onPin={() => handlePin(chat.id)}
+                                    onArchive={() => handleArchive(chat.id)}
+                                    onMore={() => handleMore(chat.id)}
+                                />
                             ))}
                         </>
                     }
@@ -185,50 +265,60 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#1f2937',
     },
-    sectionHeader: {
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        backgroundColor: '#fff',
-    },
-    sectionTitle: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#6366f1',
-    },
-    suggestedBotsContainer: {
+    activeChatsContainer: {
         paddingLeft: 16,
         paddingRight: 8,
-        paddingBottom: 16,
+        paddingVertical: 8,
     },
-    suggestedBot: {
-        flexDirection: 'row',
+    activeChat: {
         alignItems: 'center',
-        backgroundColor: '#f3f4f6',
-        padding: 12,
-        borderRadius: 12,
-        marginRight: 8,
-        width: 280,
+        marginRight: 16,
+        width: 72,
     },
-    botIconContainer: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#e0e7ff',
+    activeChatAvatar: {
+        width: 64,
+        height: 64,
+        borderRadius: 32,
+        backgroundColor: '#f3f4f6',
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 12,
+        marginBottom: 4,
+        borderWidth: 2,
+        borderColor: '#e5e7eb',
     },
-    botInfo: {
-        flex: 1,
+    newChatAvatar: {
+        backgroundColor: '#e0e7ff',
+        borderColor: '#c7d2fe',
     },
-    botName: {
-        fontSize: 15,
-        fontWeight: '600',
+    activeChatAvatarActive: {
+        borderColor: '#6366f1',
+    },
+    activeIndicator: {
+        position: 'absolute',
+        bottom: -2,
+        right: -2,
+        width: 16,
+        height: 16,
+        borderRadius: 8,
+        backgroundColor: '#10b981',
+        borderWidth: 2,
+        borderColor: '#fff',
+    },
+    activeChatName: {
+        fontSize: 12,
+        fontWeight: '500',
         color: '#1f2937',
-        marginBottom: 2,
+        textAlign: 'center',
+        marginBottom: 1,
     },
-    botDescription: {
-        fontSize: 13,
+    activeChatTask: {
+        fontSize: 11,
         color: '#6b7280',
+        textAlign: 'center',
+    },
+    divider: {
+        height: 1,
+        backgroundColor: '#f3f4f6',
+        marginVertical: 8,
     },
 }); 
