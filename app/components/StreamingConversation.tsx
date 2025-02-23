@@ -19,6 +19,7 @@ export default function StreamingConversation({ chatId }: StreamingConversationP
         api: generateAPIUrl('/api/chat'),
         onError: error => console.error(error, 'ERROR'),
         id: chatId,
+        maxSteps: 5
     });
 
     if (error) return <Text>{error.message}</Text>;
