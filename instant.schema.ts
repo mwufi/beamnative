@@ -18,8 +18,10 @@ const _schema = i.schema({
     conversations: i.entity({
       createdAt: i.number(),
       isArchived: i.boolean(),
+      lastMessage: i.any(),
       lastMessageAt: i.number(),
       name: i.string(),
+      pictureUrl: i.string(),
     }),
     messages: i.entity({
       content: i.string(),

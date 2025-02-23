@@ -3,8 +3,11 @@ import { View, FlatList, StyleSheet, StatusBar, Text, TouchableOpacity, TextInpu
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
 import ChatListItem from '@/components/ChatListItem';
 import AraProfile from '@/components/AraProfile';
+import { useUserChats } from '@/hooks/useUserChats';
+import { id } from '@instantdb/react-native';
 
 // Active chats shown in stories-like view
 const activeChats = [
@@ -69,8 +72,21 @@ const initialChats: Chat[] = [
 type ActiveChat = typeof activeChats[0];
 
 export default function InboxScreen() {
-    const [searchQuery, setSearchQuery] = useState('');
+    const router = useRouter();
+    const { conversations } = useUserChats();
+    console.log("conversations", conversations);
+    /*
+    conversations looks like this:
+    [{
+        id: '1',
+        name: 'Main',
+        createdAt: 1714000000000,
+        lastMessageAt: 1714000000000,
+    }]
+    */
+
     const [chats, setChats] = useState<Chat[]>(initialChats);
+    const [searchQuery, setSearchQuery] = useState('');
 
     const handlePin = async (chatId: string) => {
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -136,6 +152,12 @@ export default function InboxScreen() {
         );
     };
 
+    const handleCreateNewChat = async () => {
+        console.log("creating new chat...");
+        const newId = id();
+        router.push(`/chat/${newId}`);
+    };
+
     const renderActiveChat = ({ item }: { item: ActiveChat }) => (
         <TouchableOpacity style={styles.activeChat}>
             <View style={[
@@ -171,7 +193,10 @@ export default function InboxScreen() {
                 <View style={styles.header}>
                     <Text style={styles.headerTitle}>Chats</Text>
                     <View style={styles.headerButtons}>
-                        <TouchableOpacity style={styles.iconButton}>
+                        <TouchableOpacity
+                            style={styles.iconButton}
+                            onPress={handleCreateNewChat}
+                        >
                             <Ionicons name="create-outline" size={24} color="#1f2937" />
                         </TouchableOpacity>
                     </View>
@@ -205,7 +230,7 @@ export default function InboxScreen() {
 
                             {/* Recent Chats */}
                             <View style={styles.divider} />
-                            {chats.map(chat => (
+                            {conversations?.map((chat: any) => (
                                 <ChatListItem
                                     key={chat.id}
                                     {...chat}
