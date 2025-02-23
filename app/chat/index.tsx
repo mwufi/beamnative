@@ -6,6 +6,9 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import ChatHeader from '@/components/ChatHeader';
 import AraProfile from '@/components/AraProfile';
+import { useUserMainChat } from '@/hooks/useUserMainChat';
+import { db } from '@/util/instant';
+import { id } from '@instantdb/react-native';
 
 type Message = {
     id: string;
@@ -14,19 +17,86 @@ type Message = {
     timestamp: Date;
 };
 
+// TODO: fetch different info on messages
 export default function ChatScreen() {
+    const { userProfile, conversation } = useUserMainChat();
+
+    const { data } = db.useQuery({
+        messages: {
+            sender: {},
+            $: {
+                where: {
+                    conversations: conversation?.id
+                }
+            }
+        }
+    })
+
+    const { messages: dbMessages } = data || { messages: [] };
+    const messages = dbMessages.map(message => ({
+        id: message.id,
+        text: message.content,
+        isUser: message.sender?.[0]?.id === userProfile?.id,
+        timestamp: new Date(message.createdAt),
+    }));
+    console.log("messages", dbMessages);
+
     const [message, setMessage] = useState('');
-    const [messages, setMessages] = useState<Message[]>([
-        {
-            id: '1',
-            text: "Hi! I'm Ara, your AI companion. How can I help you today?",
-            isUser: false,
-            timestamp: new Date(),
-        },
-    ]);
+    // const [messages, setMessages] = useState<Message[]>([
+    //     {
+    //         id: '1',
+    //         text: JSON.stringify(conversation, null, 2),
+    //         isUser: false,
+    //         timestamp: new Date(),
+    //     }, {
+    //         id: '2',
+    //         text: JSON.stringify(userProfile, null, 2),
+    //         isUser: false,
+    //         timestamp: new Date(),
+    //     },
+    // ]);
     const [isTyping, setIsTyping] = useState(false);
     const flatListRef = useRef<FlatList>(null);
     const router = useRouter();
+
+    const sendMessage = async (message: Message) => {
+        // TODO: not this one!
+        const assistantId = "f9d13874-aeaf-4906-b9ee-121c1d947a24";
+
+        if (!conversation) {
+            console.log("conversation", conversation);
+            console.log("no conversation found");
+            return;
+        }
+
+        if (message.isUser) {
+            const x = await db.transact([
+                db.tx.messages[id()].update({
+                    content: message.text,
+                    createdAt: Date.now(),
+                    isDeleted: false,
+                    isEdited: false,
+                }).link({
+                    conversations: [conversation?.id],
+                    sender: [userProfile?.id]
+                })
+            ]);
+            console.log(x);
+        } else {
+            const x = await db.transact([
+                db.tx.messages[id()].update({
+                    content: message.text,
+                    createdAt: Date.now(),
+                    isDeleted: false,
+                    isEdited: false,
+                }).link({
+                    conversations: [conversation?.id],
+                    sender: [assistantId]
+                })
+            ]);
+            console.log(x);
+        }
+    }
 
     const handleSend = () => {
         if (!message.trim()) return;
@@ -39,7 +109,8 @@ export default function ChatScreen() {
             timestamp: new Date(),
         };
 
-        setMessages(prev => [...prev, userMessage]);
+        // setMessages(prev => [...prev, userMessage]);
+        sendMessage(userMessage);
         setMessage('');
         setIsTyping(true);
 
@@ -51,7 +122,8 @@ export default function ChatScreen() {
                 isUser: false,
                 timestamp: new Date(),
             };
-            setMessages(prev => [...prev, aiMessage]);
+            // setMessages(prev => [...prev, aiMessage]);
+            sendMessage(aiMessage);
             setIsTyping(false);
         }, 1500);
     };
