@@ -9,7 +9,7 @@ export default function AraProfile({ size, className = '' }: AraProfileProps) {
     return (
         <View className={`rounded-full overflow-hidden ${className}`} style={{ width: size, height: size }}>
             <Image
-                source={{ uri: 'https://api.dicebear.com/7.x/avataaars/png?seed=Ara' }}
+                source={require('@/assets/images/blur.png')}
                 className="w-full h-full"
             />
         </View>
