@@ -216,6 +216,7 @@ export default function ChatDetailsScreen() {
                             className="bg-gray-50 rounded-lg p-3 text-gray-800 min-h-[100]"
                             multiline
                             placeholder="Add custom instructions for Ara..."
+                            placeholderTextColor="#9ca3af"
                             value={customPrompt}
                             onChangeText={setCustomPrompt}
                         />

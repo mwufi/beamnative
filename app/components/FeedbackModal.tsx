@@ -121,6 +121,7 @@ export default function FeedbackModal({ isVisible, onClose, onSubmit }: Feedback
                                 <TextInput
                                     className="bg-gray-50 rounded-xl p-4 min-h-[120] text-base text-gray-800 mb-6"
                                     placeholder="Tell us more about your feedback..."
+                                    placeholderTextColor="#9ca3af"
                                     multiline
                                     numberOfLines={4}
                                     value={message}
