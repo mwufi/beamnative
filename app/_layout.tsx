@@ -3,7 +3,7 @@ import { Drawer } from 'expo-router/drawer';
 import { StatusBar } from 'expo-status-bar';
 import { ThemeProvider } from '@react-navigation/native';
 import { DarkTheme, DefaultTheme } from '@react-navigation/native';
-import { useColorScheme, View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import { useColorScheme, View, Text, TouchableOpacity, ScrollView, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import 'react-native-reanimated';
 import * as SplashScreen from 'expo-splash-screen';
@@ -12,6 +12,11 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import '@/global.css';
+
+// Get screen width to calculate gesture area
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+// How much of the screen width from the edge should respond to the gesture (e.g., 25% of screen)
+const GESTURE_WIDTH = SCREEN_WIDTH * 0.25;
 
 // Hardcoded past chats - in a real app, this would come from your database
 const PAST_CHATS = [
@@ -80,6 +85,9 @@ export default function RootLayout() {
         <Drawer
           screenOptions={{
             headerShown: false,
+            // Customize the drawer gesture
+            swipeEdgeWidth: GESTURE_WIDTH,
+            swipeMinDistance: 20,
           }}
           drawerContent={() => <CustomDrawerContent />}
         >
