@@ -2,6 +2,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { ReactNode } from 'react';
+import { Drawer } from 'expo-router/drawer';
 
 interface SimpleHeaderProps {
     variant: 'home' | 'chat';

@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { TutorialCard } from '@/components/cards';
 import { db } from "@/util/instant";
 import { useUser } from '@/hooks/useUser';
+import { DrawerToggleButton } from '@react-navigation/drawer';
 
 function getGreeting() {
   const hour = new Date().getHours();
@@ -23,15 +24,18 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
-          <View>
-            <Text style={styles.greeting}>{getGreeting()}</Text>
-            <Text style={styles.date}>
-              {new Date().toLocaleDateString('en-US', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric'
-              })}
-            </Text>
+          <View style={styles.headerLeft}>
+            <DrawerToggleButton tintColor="#000" />
+            <View>
+              <Text style={styles.greeting}>{getGreeting()}</Text>
+              <Text style={styles.date}>
+                {new Date().toLocaleDateString('en-US', {
+                  weekday: 'short',
+                  month: 'short',
+                  day: 'numeric'
+                })}
+              </Text>
+            </View>
           </View>
           <TouchableOpacity
             style={styles.profileButton}
@@ -75,6 +79,11 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     padding: 20,
     paddingTop: 20,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   greeting: {
     fontSize: 32,
