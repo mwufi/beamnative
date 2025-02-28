@@ -1,50 +1,65 @@
-# Welcome to your Expo app 👋
+# Nessenger
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A modern React Native app for organization, communication, and memory using Expo.
 
-## Get started
+## Key Features
 
-1. Install dependencies
+- **Home Screen**: Personalized welcome with todos and collection previews
+- **Collections**: Organize items into collections with integrated chat
+- **Memory**: View and edit AI assistant memories organized by categories
+- **AI Integration**: Chat with Ara about your collections and preferences
 
-   ```bash
-   npm install
-   ```
+## App Structure
 
-2. Start the app
-
-   ```bash
-    npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```
+/app
+  /(new-tabs)      # Main tabbed navigation
+    _layout.tsx    # Tab bar configuration
+    index.tsx      # Home screen with welcome and todos
+    collections.tsx # Collections with split view (list + chat)
+    memory.tsx     # Editable memory cards by category
+  /api             # API endpoints
+/components
+  /screens         # Screen-specific components
+    HomeHeader.tsx # Profile and actions header
+    TodoList.tsx   # Interactive todo component
+    CollectionItem.tsx # Collection list item
+    CollectionChat.tsx # Chat about collections
+    MemoryCard.tsx # Expandable memory cards
+/hooks
+  /collections     # Collection-related hooks
+  /memory          # Memory-related hooks
+/util              # Utility functions and services
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+## Getting Started
 
-## Learn more
+```bash
+# Install dependencies
+yarn install
 
-To learn more about developing your project with Expo, look at the following resources:
+# Start the development server
+yarn start
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+# Run on iOS
+yarn ios
 
-## Join the community
+# Run on Android
+yarn android
+```
 
-Join our community of developers creating universal apps.
+## Design Notes
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- Uses NativeWind (Tailwind CSS) for styling
+- Implements themed components for dark/light mode
+- Follows mobile-first responsive design principles
+- Separates UI components from business logic using hooks
+
+## Notes on the New Structure
+
+The app structure has been consolidated around three main tabs:
+1. Home - Welcome screen with todos and collection previews
+2. Collections - A split-view interface with collections and chat
+3. Memory - A searchable, categorized view of what Ara remembers about you
+
+This new structure moves away from the scattered screens in the previous version and provides a cohesive experience with clear user flows.

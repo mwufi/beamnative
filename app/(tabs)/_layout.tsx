@@ -1,52 +1,57 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
 import { View } from 'react-native';
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { Colors } from '@/constants/Colors';
 
 export default function TabLayout() {
+  const colorScheme = useColorScheme();
+
   return (
     <Tabs
       screenOptions={{
+        tabBarActiveTintColor: Colors[colorScheme].tint,
         tabBarStyle: {
-          backgroundColor: '#fff',
-          borderTopWidth: 1,
-          borderTopColor: '#e5e5e5',
+          position: 'absolute',
+          borderTopWidth: 0,
+          elevation: 0,
+          backgroundColor: 'transparent',
         },
-        tabBarActiveTintColor: '#6366f1',
-        tabBarInactiveTintColor: '#9ca3af',
-        headerShown: false
-      }}
-    >
+        tabBarBackground: () => (
+          <BlurView
+            tint={colorScheme}
+            intensity={80}
+            style={{ 
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+          />
+        ),
+        headerShown: false,
+      }}>
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => (
-            <View style={{ marginTop: 3 }}>
-              <Ionicons name="home-outline" size={24} color={color} />
-            </View>
-          ),
+          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="collections"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => (
-            <View style={{ marginTop: 3 }}>
-              <Ionicons name="sparkles-outline" size={24} color={color} />
-            </View>
-          ),
+          title: 'Collections',
+          tabBarIcon: ({ color, size }) => <Ionicons name="library" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
-        name="inbox"
+        name="memory"
         options={{
-          title: 'Inbox',
-          tabBarIcon: ({ color }) => (
-            <View style={{ marginTop: 3 }}>
-              <Ionicons name="chatbubbles-outline" size={24} color={color} />
-            </View>
-          ),
+          title: 'Memory',
+          tabBarIcon: ({ color, size }) => <Ionicons name="planet" size={size} color={color} />,
         }}
       />
     </Tabs>

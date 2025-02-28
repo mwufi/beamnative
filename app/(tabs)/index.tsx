@@ -1,106 +1,92 @@
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import { View, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { TutorialCard } from '@/components/cards';
-import { db } from "@/util/instant";
+import { Link, useRouter } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
 import { useUser } from '@/hooks/useUser';
-import { DrawerToggleButton } from '@react-navigation/drawer';
-
-function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 17) return 'Good afternoon';
-  return 'Good evening';
-}
+import { useColorScheme } from '@/hooks/useColorScheme';
+import { Colors } from '@/constants/Colors';
+import HomeHeader from '@/components/screens/HomeHeader';
+import TodoList from '@/components/screens/TodoList';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { isLoading, user, error, userProfile } = useUser();
-
-  const email = user?.email;
+  const { user, userProfile } = useUser();
+  const colorScheme = useColorScheme();
+  const userName = userProfile?.userProfiles[0]?.name || 'Zen';
+  
+  // Collection preview data - this would come from a hook in production
+  const recentCollections = [
+    { id: '1', title: 'Books', icon: 'book', items: 12 },
+    { id: '2', title: 'Movies', icon: 'film', items: 8 },
+    { id: '3', title: 'Articles', icon: 'newspaper', items: 15 },
+  ];
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.scrollView}>
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <DrawerToggleButton tintColor="#000" />
-            <View>
-              <Text style={styles.greeting}>{getGreeting()}</Text>
-              <Text style={styles.date}>
-                {new Date().toLocaleDateString('en-US', {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric'
-                })}
-              </Text>
-            </View>
-          </View>
-          <TouchableOpacity
-            style={styles.profileButton}
-            onPress={() => router.push('/(tabs)/explore')}
-          >
-            <Ionicons name="person-circle-outline" size={28} color="#000" />
-          </TouchableOpacity>
+    <ThemedView className="flex-1">
+      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+      
+      <HomeHeader userName={userName} />
+      
+      <ScrollView className="flex-1 px-4">
+        {/* Welcome section */}
+        <View className="my-6">
+          <ThemedText type="title" className="mb-1">
+            Hey {userName}!
+          </ThemedText>
+          <ThemedText type="subtitle" className="text-indigo-500">
+            Welcome back
+          </ThemedText>
         </View>
 
-        <View style={styles.cardsContainer}>
-          <TutorialCard
-            title="Welcome to Ara"
-            description="Your AI assistant for getting things done. Chat with Ara to manage tasks, get answers, or explore new ideas."
-            ctaText="Start Chatting"
-            onPress={() => router.push('/chat')}
-          />
+        {/* Todo section */}
+        <View className="mb-6">
+          <ThemedText type="defaultSemiBold" className="mb-3 text-lg">
+            Your tasks for today
+          </ThemedText>
+          <TodoList />
+        </View>
 
-          <TutorialCard
-            title="Debug Info"
-            description={`User email: ${email || 'Not logged in'}\nLoading: ${isLoading}\nError: ${error?.message || 'No error'}\nUser: ${JSON.stringify(user)}\nUser Profile: ${JSON.stringify(userProfile)}`}
-            ctaText={user ? "Log out" : "Log in"}
-            onPress={() => user ? db.auth.signOut() : router.push('/login')}
-          />
+        {/* Collections preview */}
+        <View className="mb-8">
+          <View className="flex-row justify-between items-center mb-3">
+            <ThemedText type="defaultSemiBold" className="text-lg">
+              Recent collections
+            </ThemedText>
+            <Link href="/(new-tabs)/collections" asChild>
+              <TouchableOpacity>
+                <ThemedText className="text-indigo-500">See all</ThemedText>
+              </TouchableOpacity>
+            </Link>
+          </View>
+          
+          <View className="flex-row gap-4">
+            {recentCollections.map((collection) => (
+              <TouchableOpacity 
+                key={collection.id}
+                className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4 w-28 items-center"
+                onPress={() => router.push(`/(new-tabs)/collections?id=${collection.id}`)}
+              >
+                <View className="bg-indigo-100 dark:bg-indigo-800/30 w-12 h-12 rounded-full items-center justify-center mb-2">
+                  <Ionicons 
+                    name={collection.icon as any} 
+                    size={22} 
+                    color={Colors[colorScheme].tint} 
+                  />
+                </View>
+                <ThemedText className="font-medium text-center">
+                  {collection.title}
+                </ThemedText>
+                <ThemedText className="text-sm text-gray-500 dark:text-gray-400">
+                  {collection.items} items
+                </ThemedText>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ThemedView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    padding: 20,
-    paddingTop: 20,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  greeting: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#000',
-    marginBottom: 4,
-  },
-  date: {
-    fontSize: 16,
-    color: '#6b7280',
-  },
-  profileButton: {
-    padding: 8,
-    borderRadius: 20,
-  },
-  cardsContainer: {
-    padding: 20,
-    gap: 16,
-  },
-});
