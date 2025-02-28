@@ -30,7 +30,7 @@ export default function HomeScreen() {
       
       <HomeHeader userName={userName} />
       
-      <ScrollView className="flex-1 px-4">
+      <ScrollView className="flex-1 px-4" contentContainerStyle={{ paddingBottom: 150 }}>
         {/* Welcome section */}
         <View className="my-6">
           <ThemedText type="title" className="mb-1">
@@ -55,7 +55,7 @@ export default function HomeScreen() {
             <ThemedText type="defaultSemiBold" className="text-lg">
               Recent collections
             </ThemedText>
-            <Link href="/(new-tabs)/collections" asChild>
+            <Link href="/collections" asChild>
               <TouchableOpacity>
                 <ThemedText className="text-indigo-500">See all</ThemedText>
               </TouchableOpacity>
@@ -67,7 +67,7 @@ export default function HomeScreen() {
               <TouchableOpacity 
                 key={collection.id}
                 className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4 w-28 items-center"
-                onPress={() => router.push(`/(new-tabs)/collections?id=${collection.id}`)}
+                onPress={() => router.push(`/collections?id=${collection.id}`)}
               >
                 <View className="bg-indigo-100 dark:bg-indigo-800/30 w-12 h-12 rounded-full items-center justify-center mb-2">
                   <Ionicons 

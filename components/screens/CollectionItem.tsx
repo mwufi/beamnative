@@ -1,10 +1,10 @@
 import React from 'react';
 import { View, TouchableOpacity, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { ThemedText } from '@/components/ThemedText';
 import { Colors } from '@/constants/Colors';
+import { Haptics } from '@/util/haptics';
 
 type Collection = {
   id: string;
@@ -25,31 +25,31 @@ export default function CollectionItem({ collection, isSelected, onPress }: Coll
   const colorScheme = useColorScheme();
   
   const handlePress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Haptics.impact();
     onPress();
   };
   
   return (
     <Pressable 
       onPress={handlePress}
-      className={`px-4 py-3.5 ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/10' : ''}`}
+      className={`px-4 py-3.5 ${isSelected ? 'bg-indigo-50 dark:bg-indigo-900/30' : ''}`}
       style={({ pressed }) => [
         {
           backgroundColor: pressed 
-            ? (colorScheme === 'dark' ? 'rgba(79, 70, 229, 0.1)' : 'rgba(224, 231, 255, 0.6)') 
+            ? (colorScheme === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(224, 231, 255, 0.6)') 
             : (isSelected 
-                ? (colorScheme === 'dark' ? 'rgba(79, 70, 229, 0.1)' : 'rgba(238, 242, 255, 0.9)') 
+                ? (colorScheme === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(238, 242, 255, 0.9)') 
                 : 'transparent')
         }
       ]}
     >
       <View className="flex-row items-center">
         <View className="relative mr-3">
-          <View className={`w-12 h-12 rounded-xl ${isSelected ? 'bg-indigo-100 dark:bg-indigo-900/30' : 'bg-gray-100 dark:bg-gray-800/60'} items-center justify-center`}>
+          <View className={`w-12 h-12 rounded-xl ${isSelected ? 'bg-indigo-100 dark:bg-indigo-800/60' : 'bg-gray-100 dark:bg-gray-800/30'} items-center justify-center`}>
             <Ionicons 
               name={collection.icon as any} 
               size={24} 
-              color={isSelected ? Colors[colorScheme].tint : (colorScheme === 'dark' ? '#9ca3af' : '#6b7280')} 
+              color={isSelected ? Colors[colorScheme].tint : (colorScheme === 'dark' ? '#d1d5db' : '#6b7280')} 
             />
           </View>
           
@@ -62,7 +62,10 @@ export default function CollectionItem({ collection, isSelected, onPress }: Coll
         </View>
         
         <View className="flex-1 pr-2">
-          <ThemedText className="font-medium text-base">
+          <ThemedText 
+            className="font-medium text-base"
+            style={{ color: isSelected ? (colorScheme === 'dark' ? '#e0e7ff' : '#4f46e5') : undefined }}
+          >
             {collection.title}
           </ThemedText>
           
@@ -79,7 +82,7 @@ export default function CollectionItem({ collection, isSelected, onPress }: Coll
           )}
         </View>
         
-        <View className={`p-2 rounded-full ${isSelected ? 'bg-indigo-100 dark:bg-indigo-900/30' : ''}`}>
+        <View className={`p-2 rounded-full ${isSelected ? 'bg-indigo-100 dark:bg-indigo-800/40' : ''}`}>
           <Ionicons 
             name="chevron-forward" 
             size={18} 

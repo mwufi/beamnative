@@ -7,8 +7,10 @@ import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useColorScheme } from '@/hooks/useColorScheme';
 import { Colors } from '@/constants/Colors';
+import { Haptics } from '@/util/haptics';
 import { useMemories } from '@/hooks/memory/useMemories';
 import MemoryCard from '@/components/screens/MemoryCard';
+import CategoryPills from '@/components/ui/CategoryPills';
 
 export default function MemoryScreen() {
   const router = useRouter();
@@ -64,38 +66,21 @@ export default function MemoryScreen() {
       </View>
 
       {/* Categories */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        className="px-4 py-3 border-b border-gray-100 dark:border-gray-800"
-      >
-        <TouchableOpacity
-          onPress={() => setSelectedCategory('all')}
-          className={`mr-4 px-4 py-2 rounded-full ${selectedCategory === 'all' ? 'bg-indigo-500' : 'bg-gray-100 dark:bg-gray-800'}`}
-        >
-          <ThemedText className={selectedCategory === 'all' ? 'text-white' : ''}>
-            All
-          </ThemedText>
-        </TouchableOpacity>
-
-        {categories.map((category) => (
-          <TouchableOpacity
-            key={category.id}
-            onPress={() => setSelectedCategory(category.id)}
-            className={`mr-4 px-4 py-2 rounded-full flex-row items-center ${selectedCategory === category.id ? 'bg-indigo-500' : 'bg-gray-100 dark:bg-gray-800'}`}
-          >
-            <Ionicons
-              name={category.icon as any}
-              size={16}
-              color={selectedCategory === category.id ? 'white' : (colorScheme === 'dark' ? '#e5e7eb' : '#4b5563')}
-              style={{ marginRight: 6 }}
-            />
-            <ThemedText className={selectedCategory === category.id ? 'text-white' : ''}>
-              {category.name}
-            </ThemedText>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
+      <View className="border-b border-gray-100 dark:border-gray-800">
+        <CategoryPills
+          categories={[
+            { id: 'all', name: 'All' },
+            ...categories.map(cat => ({ 
+              id: cat.id, 
+              name: cat.name, 
+              icon: cat.icon,
+            }))
+          ]}
+          selectedId={selectedCategory}
+          onSelect={setSelectedCategory}
+          compact
+        />
+      </View>
 
       {/* Memory list */}
       <FlatList
@@ -108,7 +93,7 @@ export default function MemoryScreen() {
             onUpdate={updateMemory}
           />
         )}
-        contentContainerStyle={{ padding: 16, paddingBottom: 40 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 150 }}
       />
     </ThemedView>
   );

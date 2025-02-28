@@ -30,3 +30,11 @@
 - Colors don't cascade from Views to children - apply directly to Text
 - Ensure styles render properly on all platforms (web/iOS/Android)
 - Use Expo components and hooks when available
+
+### Nativewind Gotchas
+Issue: Modifiers are not working
+Solution: Ensure the component you are applying the style to supports both the style and the required props (e.g hover:text-white - does the component support color styles and have an onHover prop?)
+
+Issue: Explicit styles
+Solution: React Native has various issues when conditionally applying styles. To prevent these issues it's best to declare all styles.
+For example, instead of only applying a text color for dark mode, provide both a light and dark mode text color.
