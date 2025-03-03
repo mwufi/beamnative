@@ -2,8 +2,10 @@ import { StyleSheet, ScrollView, View, Text, Pressable, Image, Switch } from 're
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
+import { useRouter } from 'expo-router';
 
 export default function MeScreen() {
+    const router = useRouter();
     const [darkMode, setDarkMode] = useState(true);
     const [notifications, setNotifications] = useState(true);
     const [dataUsage, setDataUsage] = useState(false);
@@ -42,6 +44,92 @@ export default function MeScreen() {
                     <Text style={styles.statNumber}>28</Text>
                     <Text style={styles.statLabel}>Chats</Text>
                 </View>
+            </View>
+
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>My Activities</Text>
+
+                <Pressable
+                    style={styles.menuItem}
+                    onPress={() => router.push('/challenges/my' as any)}
+                >
+                    <View style={styles.menuItemLeft}>
+                        <Ionicons name="trophy-outline" size={24} color="white" />
+                        <Text style={styles.menuItemText}>My Challenges</Text>
+                    </View>
+                    <View style={styles.badgeContainer}>
+                        <Text style={styles.badgeText}>3</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
+                </Pressable>
+
+                <Pressable
+                    style={styles.menuItem}
+                    onPress={() => router.push('/events/my' as any)}
+                >
+                    <View style={styles.menuItemLeft}>
+                        <Ionicons name="calendar-outline" size={24} color="white" />
+                        <Text style={styles.menuItemText}>My Events</Text>
+                    </View>
+                    <View style={styles.badgeContainer}>
+                        <Text style={styles.badgeText}>2</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
+                </Pressable>
+
+                <Pressable
+                    style={styles.menuItem}
+                    onPress={() => router.push('/learning/my' as any)}
+                >
+                    <View style={styles.menuItemLeft}>
+                        <Ionicons name="school-outline" size={24} color="white" />
+                        <Text style={styles.menuItemText}>My Learning Paths</Text>
+                    </View>
+                    <View style={styles.badgeContainer}>
+                        <Text style={styles.badgeText}>1</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
+                </Pressable>
+
+                <Pressable
+                    style={styles.menuItem}
+                    onPress={() => router.push('/ara/creations' as any)}
+                >
+                    <View style={styles.menuItemLeft}>
+                        <Ionicons name="document-text-outline" size={24} color="white" />
+                        <Text style={styles.menuItemText}>My Creations</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
+                </Pressable>
+            </View>
+
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Ara Features</Text>
+
+                <Pressable
+                    style={styles.menuItem}
+                    onPress={() => router.push('/ara/labs' as any)}
+                >
+                    <View style={styles.menuItemLeft}>
+                        <Ionicons name="flask-outline" size={24} color="white" />
+                        <Text style={styles.menuItemText}>Ara Labs</Text>
+                    </View>
+                    <View style={styles.newFeatureBadge}>
+                        <Text style={styles.newFeatureText}>NEW</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
+                </Pressable>
+
+                <Pressable
+                    style={styles.menuItem}
+                    onPress={() => router.push('/ara/create' as any)}
+                >
+                    <View style={styles.menuItemLeft}>
+                        <Ionicons name="create-outline" size={24} color="white" />
+                        <Text style={styles.menuItemText}>Creative Studio</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={20} color="rgba(255, 255, 255, 0.5)" />
+                </Pressable>
             </View>
 
             <View style={styles.section}>
@@ -247,11 +335,36 @@ const styles = StyleSheet.create({
     menuItemLeft: {
         flexDirection: 'row',
         alignItems: 'center',
+        flex: 1,
     },
     menuItemText: {
         color: 'white',
         fontSize: 16,
         marginLeft: 12,
+    },
+    badgeContainer: {
+        backgroundColor: '#8e44ad',
+        borderRadius: 12,
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        marginRight: 8,
+    },
+    badgeText: {
+        color: 'white',
+        fontSize: 12,
+        fontWeight: 'bold',
+    },
+    newFeatureBadge: {
+        backgroundColor: '#e74c3c',
+        borderRadius: 12,
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        marginRight: 8,
+    },
+    newFeatureText: {
+        color: 'white',
+        fontSize: 10,
+        fontWeight: 'bold',
     },
     logoutButton: {
         backgroundColor: '#e74c3c',

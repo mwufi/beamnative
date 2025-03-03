@@ -14,6 +14,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
 
 // Mock chat data
 const initialMessages = [
@@ -26,6 +27,7 @@ const initialMessages = [
 ];
 
 export default function AraScreen() {
+    const router = useRouter();
     const [messages, setMessages] = useState(initialMessages);
     const [inputText, setInputText] = useState('');
     const [isLoading, setIsLoading] = useState(false);
@@ -157,6 +159,24 @@ export default function AraScreen() {
                         </View>
                     )}
                 </ScrollView>
+
+                <View style={styles.toolbarContainer}>
+                    <Pressable
+                        style={styles.toolbarButton}
+                        onPress={() => router.push('/ara/labs' as any)}
+                    >
+                        <Ionicons name="flask" size={20} color="white" />
+                        <Text style={styles.toolbarButtonText}>Labs</Text>
+                    </Pressable>
+
+                    <Pressable
+                        style={styles.toolbarButton}
+                        onPress={() => router.push('/ara/create' as any)}
+                    >
+                        <Ionicons name="create" size={20} color="white" />
+                        <Text style={styles.toolbarButtonText}>Create</Text>
+                    </Pressable>
+                </View>
 
                 <BlurView intensity={30} tint="dark" style={styles.inputContainer}>
                     <TextInput
@@ -296,5 +316,27 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginLeft: 8,
+    },
+    toolbarContainer: {
+        flexDirection: 'row',
+        justifyContent: 'center',
+        paddingVertical: 8,
+        borderTopWidth: 1,
+        borderTopColor: 'rgba(255, 255, 255, 0.1)',
+        backgroundColor: 'rgba(0, 0, 0, 0.3)',
+    },
+    toolbarButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: 'rgba(255, 255, 255, 0.1)',
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 20,
+        marginHorizontal: 8,
+    },
+    toolbarButtonText: {
+        color: 'white',
+        marginLeft: 8,
+        fontWeight: '500',
     },
 }); 
