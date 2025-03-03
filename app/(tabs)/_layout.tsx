@@ -1,59 +1,98 @@
 import { Tabs } from 'expo-router';
+import { Pressable, useColorScheme } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { View } from 'react-native';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { Colors } from '@/constants/Colors';
+import { useRouter } from 'expo-router';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+    const colorScheme = useColorScheme();
+    const router = useRouter();
 
-  return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme].tint,
-        tabBarStyle: {
-          position: 'absolute',
-          borderTopWidth: 0,
-          elevation: 0,
-          backgroundColor: 'transparent',
-        },
-        tabBarBackground: () => (
-          <BlurView
-            tint={colorScheme}
-            intensity={80}
-            style={{ 
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
+    return (
+        <Tabs
+            screenOptions={{
+                tabBarActiveTintColor: '#fff',
+                tabBarInactiveTintColor: 'rgba(255, 255, 255, 0.5)',
+                tabBarStyle: {
+                    backgroundColor: '#121212',
+                    borderTopWidth: 0,
+                    elevation: 0,
+                    height: 60,
+                },
+                tabBarLabelStyle: {
+                    fontSize: 12,
+                    marginBottom: 5,
+                },
+                headerStyle: {
+                    backgroundColor: '#121212',
+                },
+                headerTintColor: '#fff',
+                headerRight: () => (
+                    <Pressable
+                        onPress={() => router.push('/inbox' as any)}
+                        style={({ pressed }) => ({
+                            opacity: pressed ? 0.5 : 1,
+                            marginRight: 15,
+                        })}
+                    >
+                        <Ionicons name="mail-outline" size={24} color="white" />
+                    </Pressable>
+                ),
             }}
-          />
-        ),
-        headerShown: false,
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ color, size }) => <Ionicons name="home" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="collections"
-        options={{
-          title: 'Collections',
-          tabBarIcon: ({ color, size }) => <Ionicons name="library" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="memory"
-        options={{
-          title: 'Memory',
-          tabBarIcon: ({ color, size }) => <Ionicons name="planet" size={size} color={color} />,
-        }}
-      />
-    </Tabs>
-  );
-}
+        >
+            <Tabs.Screen
+                name="index"
+                options={{
+                    title: 'Home',
+                    tabBarIcon: ({ color, focused }) => (
+                        <Ionicons
+                            name={focused ? 'home' : 'home-outline'}
+                            size={24}
+                            color={color}
+                        />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="discover"
+                options={{
+                    title: 'Discover',
+                    tabBarIcon: ({ color, focused }) => (
+                        <Ionicons
+                            name={focused ? 'compass' : 'compass-outline'}
+                            size={24}
+                            color={color}
+                        />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="ara"
+                options={{
+                    title: 'Ara',
+                    tabBarIcon: ({ color, focused }) => (
+                        <Ionicons
+                            name={focused ? 'chatbubble' : 'chatbubble-outline'}
+                            size={24}
+                            color={color}
+                        />
+                    ),
+                }}
+            />
+            <Tabs.Screen
+                name="me"
+                options={{
+                    title: 'Me',
+                    tabBarIcon: ({ color, focused }) => (
+                        <Ionicons
+                            name={focused ? 'person' : 'person-outline'}
+                            size={24}
+                            color={color}
+                        />
+                    ),
+                }}
+            />
+        </Tabs>
+    );
+} 

@@ -3,7 +3,7 @@ import { useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'react-native';
 import SimpleHeader from '@/components/SimpleHeader';
-import StreamingConversation from '@/app/components/StreamingConversation';
+import StreamingConversation from '@/old-app/components/StreamingConversation';
 import { useRouter } from 'expo-router';
 
 export default function NewChatScreen() {

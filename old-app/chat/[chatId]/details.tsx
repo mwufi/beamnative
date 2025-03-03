@@ -3,11 +3,11 @@ import { View, Text, ScrollView, StatusBar, TouchableOpacity, TextInput, Alert }
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import AraProfile from '@/app/components/AraProfile';
-import ChatDetailsHeader from '@/app/components/chat/ChatDetailsHeader';
-import FeedbackModal from '@/app/components/FeedbackModal';
-import MemoryModal from '@/app/components/MemoryModal';
-import SelectModal from '@/app/components/SelectModal';
+import AraProfile from '@/old-app/components/AraProfile';
+import ChatDetailsHeader from '@/old-app/components/chat/ChatDetailsHeader';
+import FeedbackModal from '@/old-app/components/FeedbackModal';
+import MemoryModal from '@/old-app/components/MemoryModal';
+import SelectModal from '@/old-app/components/SelectModal';
 
 interface MenuItem {
     id: string;
