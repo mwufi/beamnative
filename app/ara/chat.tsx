@@ -12,7 +12,6 @@ import {
     ActivityIndicator,
     TouchableOpacity,
     Modal,
-    Animated,
     Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,7 +22,9 @@ import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
-import { Audio, AVPlaybackStatus } from 'expo-av';
+import { Audio } from 'expo-av';
+import VoiceRecorderLive from '@/components/VoiceRecorderLive';
+import AudioMessagePlayer from '@/components/AudioMessagePlayer';
 
 // Custom hook for haptic feedback that checks platform
 const useHaptics = () => {
@@ -98,23 +99,18 @@ export default function AraChat() {
     const [isLoading, setIsLoading] = useState(false);
     const [showMediaOptions, setShowMediaOptions] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
-    const [recordingDuration, setRecordingDuration] = useState(0);
-    const [recording, setRecording] = useState<Audio.Recording | null>(null);
-    const [audioUri, setAudioUri] = useState<string | null>(null);
-    const [sound, setSound] = useState<Audio.Sound | null>(null);
-    const [isPlaying, setIsPlaying] = useState<{ [key: string]: boolean }>({});
-    const [waveformAnimation] = useState(new Animated.Value(0));
     const [isPickerActive, setIsPickerActive] = useState(false);
 
     const scrollViewRef = useRef<ScrollView>(null);
-    const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
     const router = useRouter();
     const { triggerHaptic } = useHaptics();
 
     useEffect(() => {
         // Scroll to bottom when component mounts
         setTimeout(() => {
-            scrollViewRef.current?.scrollToEnd({ animated: false });
+            if (scrollViewRef.current) {
+                scrollViewRef.current.scrollToEnd({ animated: false });
+            }
         }, 100);
 
         // Request permissions on native platforms
@@ -138,42 +134,7 @@ export default function AraChat() {
                 }
             })();
         }
-
-        // Clean up on unmount
-        return () => {
-            if (recordingTimerRef.current) {
-                clearInterval(recordingTimerRef.current);
-            }
-            if (recording) {
-                recording.stopAndUnloadAsync();
-            }
-            if (sound) {
-                sound.unloadAsync();
-            }
-        };
     }, []);
-
-    // Animate waveform when recording
-    useEffect(() => {
-        if (isRecording) {
-            Animated.loop(
-                Animated.sequence([
-                    Animated.timing(waveformAnimation, {
-                        toValue: 1,
-                        duration: 500,
-                        useNativeDriver: true,
-                    }),
-                    Animated.timing(waveformAnimation, {
-                        toValue: 0.3,
-                        duration: 500,
-                        useNativeDriver: true,
-                    }),
-                ])
-            ).start();
-        } else {
-            waveformAnimation.setValue(0);
-        }
-    }, [isRecording]);
 
     const handleSendText = () => {
         if (inputText.trim() === '') return;
@@ -422,205 +383,6 @@ export default function AraChat() {
         }
     };
 
-    const startRecording = async () => {
-        // Check if we're on web - audio recording not supported
-        if (Platform.OS === 'web') {
-            alert('Audio recording is not supported on web. Please use a mobile device for this feature.');
-            return;
-        }
-
-        try {
-            setIsRecording(true);
-            setRecordingDuration(0);
-
-            // Start timer for recording duration
-            recordingTimerRef.current = setInterval(() => {
-                setRecordingDuration(prev => prev + 1);
-            }, 1000);
-
-            // Configure recording
-            await Audio.setAudioModeAsync({
-                allowsRecordingIOS: true,
-                playsInSilentModeIOS: true,
-            });
-
-            // Create and start recording
-            const { recording } = await Audio.Recording.createAsync(
-                Audio.RecordingOptionsPresets.HIGH_QUALITY
-            );
-            setRecording(recording);
-
-            // Haptic feedback when recording starts
-            triggerHaptic('medium');
-
-        } catch (err) {
-            console.error('Failed to start recording', err);
-            setIsRecording(false);
-            if (recordingTimerRef.current) {
-                clearInterval(recordingTimerRef.current);
-            }
-        }
-    };
-
-    const stopRecording = async () => {
-        if (!recording) return;
-
-        try {
-            // Stop recording
-            await recording.stopAndUnloadAsync();
-
-            // Stop timer
-            if (recordingTimerRef.current) {
-                clearInterval(recordingTimerRef.current);
-            }
-
-            // Get recording URI
-            const uri = recording.getURI();
-            setAudioUri(uri);
-
-            // Reset recording state
-            setRecording(null);
-            setIsRecording(false);
-
-            // If we have a URI, send the audio message
-            if (uri) {
-                const fileInfo = await FileSystem.getInfoAsync(uri);
-
-                // Create audio message
-                const audioMessage: Message = {
-                    id: Date.now().toString(),
-                    type: 'audio',
-                    content: 'Audio Message',
-                    uri: uri,
-                    sender: 'user',
-                    timestamp: new Date(),
-                    fileSize: fileInfo.exists ? fileInfo.size : undefined,
-                    fileType: 'audio',
-                    duration: recordingDuration,
-                };
-
-                setMessages(prev => [...prev, audioMessage]);
-
-                // Scroll to bottom
-                setTimeout(() => {
-                    scrollViewRef.current?.scrollToEnd({ animated: true });
-                }, 100);
-
-                // Simulate response
-                setIsLoading(true);
-                setTimeout(() => {
-                    const response: Message = {
-                        id: (Date.now() + 1).toString(),
-                        type: 'text',
-                        content: "I've received your voice message. Let me listen to it.",
-                        sender: 'ara',
-                        timestamp: new Date(),
-                    };
-
-                    setMessages(prev => [...prev, response]);
-                    setIsLoading(false);
-
-                    // Scroll to bottom again after response
-                    setTimeout(() => {
-                        scrollViewRef.current?.scrollToEnd({ animated: true });
-                    }, 100);
-
-                    triggerHaptic('success');
-                }, 1500);
-            }
-
-        } catch (err) {
-            console.error('Failed to stop recording', err);
-        }
-    };
-
-    const cancelRecording = async () => {
-        if (!recording) return;
-
-        try {
-            // Stop recording without saving
-            await recording.stopAndUnloadAsync();
-
-            // Stop timer
-            if (recordingTimerRef.current) {
-                clearInterval(recordingTimerRef.current);
-            }
-
-            // Reset recording state
-            setRecording(null);
-            setIsRecording(false);
-            setRecordingDuration(0);
-
-            // Haptic feedback for cancellation
-            triggerHaptic('warning');
-
-        } catch (err) {
-            console.error('Failed to cancel recording', err);
-        }
-    };
-
-    const playAudio = async (uri: string, messageId: string) => {
-        // Check if we're on web - some audio formats might not be supported
-        if (Platform.OS === 'web') {
-            try {
-                // For web, we can use the HTML audio element
-                const audioElement = new window.Audio(uri);
-                audioElement.play();
-                setIsPlaying(prev => ({ ...prev, [messageId]: true }));
-
-                audioElement.onended = () => {
-                    setIsPlaying(prev => ({ ...prev, [messageId]: false }));
-                };
-
-                return;
-            } catch (error) {
-                console.error('Error playing audio on web:', error);
-                return;
-            }
-        }
-
-        // Native platforms use Expo AV
-        try {
-            // Stop any currently playing audio
-            if (sound) {
-                await sound.stopAsync();
-                await sound.unloadAsync();
-                setSound(null);
-            }
-
-            // Load the audio
-            const { sound: newSound } = await Audio.Sound.createAsync(
-                { uri },
-                { shouldPlay: true }
-            );
-            setSound(newSound);
-
-            // Update playing state
-            setIsPlaying(prev => ({ ...prev, [messageId]: true }));
-
-            // Listen for playback status updates
-            newSound.setOnPlaybackStatusUpdate((status: AVPlaybackStatus) => {
-                if (status.isLoaded && !status.isPlaying && status.didJustFinish) {
-                    // Audio finished playing
-                    setIsPlaying(prev => ({ ...prev, [messageId]: false }));
-                }
-            });
-
-            // Start playing
-            await newSound.playAsync();
-
-        } catch (err) {
-            console.error('Failed to play audio', err);
-            setIsPlaying(prev => ({ ...prev, [messageId]: false }));
-        }
-    };
-
-    const formatDuration = (seconds: number) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
-    };
-
     // Simple mock response function
     const getResponse = (input: string) => {
         const lowerInput = input.toLowerCase();
@@ -681,7 +443,8 @@ export default function AraChat() {
                     style={[
                         styles.messageContent,
                         isUser ? styles.userMessageContent : styles.otherMessageContent,
-                        message.type === 'image' && styles.imageMessageContent
+                        message.type === 'image' && styles.imageMessageContent,
+                        message.type === 'audio' && styles.audioMessageContent
                     ]}
                 >
                     {message.type === 'text' && (
@@ -707,38 +470,69 @@ export default function AraChat() {
                     )}
 
                     {message.type === 'audio' && message.uri && (
-                        <TouchableOpacity
-                            style={styles.audioContainer}
-                            onPress={() => playAudio(message.uri!, message.id)}
-                        >
-                            <View style={styles.audioControls}>
-                                <Ionicons
-                                    name={isPlaying[message.id] ? "pause" : "play"}
-                                    size={20}
-                                    color="white"
-                                />
-                                <View style={styles.audioWaveform}>
-                                    {[...Array(8)].map((_, i) => (
-                                        <View
-                                            key={i}
-                                            style={[
-                                                styles.waveformBar,
-                                                { height: 5 + Math.random() * 15 }
-                                            ]}
-                                        />
-                                    ))}
-                                </View>
-                            </View>
-                            <Text style={styles.audioDuration}>
-                                {message.duration ? formatDuration(message.duration) : '0:00'}
-                            </Text>
-                        </TouchableOpacity>
+                        <AudioMessagePlayer
+                            uri={message.uri}
+                            duration={message.duration}
+                            messageId={message.id}
+                        />
                     )}
 
                     <Text style={styles.messageTime}>{formatTime(message.timestamp)}</Text>
                 </View>
             </View>
         );
+    };
+
+    const handleRecordingComplete = (uri: string, duration: number) => {
+        // Create audio message
+        const audioMessage: Message = {
+            id: Date.now().toString(),
+            type: 'audio',
+            content: 'Audio Message',
+            uri: uri,
+            sender: 'user',
+            timestamp: new Date(),
+            fileType: 'audio',
+            duration: duration,
+        };
+
+        setMessages(prev => [...prev, audioMessage]);
+        setIsRecording(false);
+
+        // Scroll to bottom
+        setTimeout(() => {
+            if (scrollViewRef.current) {
+                scrollViewRef.current.scrollToEnd({ animated: true });
+            }
+        }, 100);
+
+        // Simulate response
+        setIsLoading(true);
+        setTimeout(() => {
+            const response: Message = {
+                id: (Date.now() + 1).toString(),
+                type: 'text',
+                content: "I've received your voice message. Let me listen to it.",
+                sender: 'ara',
+                timestamp: new Date(),
+            };
+
+            setMessages(prev => [...prev, response]);
+            setIsLoading(false);
+
+            // Scroll to bottom again after response
+            setTimeout(() => {
+                if (scrollViewRef.current) {
+                    scrollViewRef.current.scrollToEnd({ animated: true });
+                }
+            }, 100);
+
+            triggerHaptic('success');
+        }, 1500);
+    };
+
+    const handleCancelRecording = () => {
+        setIsRecording(false);
     };
 
     return (
@@ -791,48 +585,10 @@ export default function AraChat() {
             </ScrollView>
 
             {isRecording ? (
-                <BlurView intensity={30} tint="dark" style={styles.recordingContainer}>
-                    <View style={styles.recordingContent}>
-                        <Animated.View
-                            style={[
-                                styles.recordingWaveform,
-                                { opacity: waveformAnimation }
-                            ]}
-                        >
-                            {[...Array(10)].map((_, i) => (
-                                <View
-                                    key={i}
-                                    style={[
-                                        styles.recordingBar,
-                                        {
-                                            height: 10 + Math.random() * 20,
-                                            marginHorizontal: 2
-                                        }
-                                    ]}
-                                />
-                            ))}
-                        </Animated.View>
-                        <Text style={styles.recordingTimer}>
-                            {formatDuration(recordingDuration)}
-                        </Text>
-                        <View style={styles.recordingButtons}>
-                            <TouchableOpacity
-                                style={[styles.recordingButton, styles.cancelButton]}
-                                onPress={cancelRecording}
-                            >
-                                <Ionicons name="close" size={24} color="white" />
-                                <Text style={styles.recordingButtonText}>Cancel</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                style={[styles.recordingButton, styles.sendButton]}
-                                onPress={stopRecording}
-                            >
-                                <Ionicons name="send" size={24} color="white" />
-                                <Text style={styles.recordingButtonText}>Send</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </BlurView>
+                <VoiceRecorderLive
+                    onRecordingComplete={handleRecordingComplete}
+                    onCancel={handleCancelRecording}
+                />
             ) : (
                 <BlurView intensity={30} tint="dark" style={styles.inputContainer}>
                     <TouchableOpacity
@@ -856,7 +612,7 @@ export default function AraChat() {
                     {inputText.trim() === '' ? (
                         <TouchableOpacity
                             style={styles.micButton}
-                            onPress={startRecording}
+                            onPress={() => setIsRecording(true)}
                         >
                             <Ionicons name="mic" size={20} color="white" />
                         </TouchableOpacity>
@@ -950,7 +706,7 @@ export default function AraChat() {
                                             [{ text: 'OK' }]
                                         );
                                     } else {
-                                        startRecording();
+                                        setIsRecording(true);
                                     }
                                 }, 300);
                             }}
@@ -1158,31 +914,10 @@ const styles = StyleSheet.create({
         fontSize: 16,
         marginLeft: 12,
     },
-    audioContainer: {
-        flexDirection: 'column',
-        marginBottom: 4,
-        width: 200,
-    },
-    audioControls: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    audioWaveform: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginLeft: 10,
-        height: 20,
-    },
-    waveformBar: {
-        width: 3,
-        backgroundColor: 'rgba(255, 255, 255, 0.7)',
-        marginHorizontal: 1,
-        borderRadius: 1,
-    },
-    audioDuration: {
-        color: 'rgba(255, 255, 255, 0.7)',
-        fontSize: 12,
-        marginTop: 4,
+    audioMessageContent: {
+        padding: 12,
+        paddingBottom: 8,
+        width: 250, // Give more space for the audio player
     },
     micButton: {
         width: 40,
@@ -1192,52 +927,5 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         marginLeft: 8,
-    },
-    recordingContainer: {
-        padding: 16,
-        borderTopWidth: 1,
-        borderTopColor: 'rgba(255, 255, 255, 0.1)',
-    },
-    recordingContent: {
-        alignItems: 'center',
-    },
-    recordingWaveform: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        height: 40,
-        marginBottom: 8,
-    },
-    recordingBar: {
-        width: 4,
-        backgroundColor: '#8e44ad',
-        borderRadius: 2,
-    },
-    recordingTimer: {
-        color: 'white',
-        fontSize: 16,
-        marginBottom: 16,
-    },
-    recordingButtons: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        width: '100%',
-    },
-    recordingButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 8,
-        paddingHorizontal: 16,
-        borderRadius: 20,
-        minWidth: 120,
-    },
-    cancelButton: {
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    },
-    recordingButtonText: {
-        color: 'white',
-        marginLeft: 8,
-        fontSize: 16,
     },
 }); 

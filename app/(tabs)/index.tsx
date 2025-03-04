@@ -70,7 +70,7 @@ const learningPath = {
 };
 
 // Check if there's an app-wide event
-const [hasAppEvent, setHasAppEvent] = useState(true);
+const hasAppEvent = true;
 const appEvent = {
     id: 'app-event1',
     title: "Ara's 1st Birthday Bash!",

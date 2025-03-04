@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
     StyleSheet,
     View,
@@ -7,7 +7,8 @@ import {
     Image,
     Dimensions,
     Animated,
-    PanResponder
+    PanResponder,
+    Platform
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -69,6 +70,7 @@ const recommendations = [
 export default function RecommendationsScreen() {
     const router = useRouter();
     const [currentIndex, setCurrentIndex] = useState(0);
+    const [isTransitioning, setIsTransitioning] = useState(false);
     const position = useRef(new Animated.ValueXY()).current;
     const rotation = position.x.interpolate({
         inputRange: [-width / 2, 0, width / 2],
@@ -76,25 +78,36 @@ export default function RecommendationsScreen() {
         extrapolate: 'clamp',
     });
 
+    // Threshold for swipe detection - lower for iOS
+    const SWIPE_THRESHOLD = Platform.OS === 'ios' ? 80 : 120;
+
+    // Reset position when currentIndex changes
+    useEffect(() => {
+        position.setValue({ x: 0, y: 0 });
+        setIsTransitioning(false);
+    }, [currentIndex]);
+
     const panResponder = useRef(
         PanResponder.create({
-            onStartShouldSetPanResponder: () => true,
+            onStartShouldSetPanResponder: () => !isTransitioning,
+            onMoveShouldSetPanResponder: () => !isTransitioning,
             onPanResponderMove: (_, gesture) => {
                 position.setValue({ x: gesture.dx, y: gesture.dy });
             },
             onPanResponderRelease: (_, gesture) => {
-                if (gesture.dx > 120) {
+                if (gesture.dx > SWIPE_THRESHOLD) {
                     // Swiped right (like)
                     swipeRight();
-                } else if (gesture.dx < -120) {
+                } else if (gesture.dx < -SWIPE_THRESHOLD) {
                     // Swiped left (dislike)
                     swipeLeft();
                 } else {
                     // Return to center
                     Animated.spring(position, {
                         toValue: { x: 0, y: 0 },
-                        friction: 5,
-                        useNativeDriver: false,
+                        friction: Platform.OS === 'ios' ? 7 : 5,
+                        tension: 40,
+                        useNativeDriver: Platform.OS === 'ios',
                     }).start();
                 }
             },
@@ -102,26 +115,30 @@ export default function RecommendationsScreen() {
     ).current;
 
     const swipeRight = () => {
+        if (isTransitioning) return;
+        setIsTransitioning(true);
+
         Animated.timing(position, {
             toValue: { x: width + 100, y: 0 },
-            duration: 300,
-            useNativeDriver: false,
+            duration: 250,
+            useNativeDriver: Platform.OS === 'ios',
         }).start(() => {
             // Move to next card
             setCurrentIndex((prevIndex) => (prevIndex + 1) % recommendations.length);
-            position.setValue({ x: 0, y: 0 });
         });
     };
 
     const swipeLeft = () => {
+        if (isTransitioning) return;
+        setIsTransitioning(true);
+
         Animated.timing(position, {
             toValue: { x: -width - 100, y: 0 },
-            duration: 300,
-            useNativeDriver: false,
+            duration: 250,
+            useNativeDriver: Platform.OS === 'ios',
         }).start(() => {
             // Move to next card
             setCurrentIndex((prevIndex) => (prevIndex + 1) % recommendations.length);
-            position.setValue({ x: 0, y: 0 });
         });
     };
 
@@ -133,86 +150,91 @@ export default function RecommendationsScreen() {
         ],
     };
 
+    // Next card animation
+    const nextCardTranslateY = position.x.interpolate({
+        inputRange: [-width / 2, 0, width / 2],
+        outputRange: [0, 10, 0],
+        extrapolate: 'clamp',
+    });
+
+    const nextCardScale = position.x.interpolate({
+        inputRange: [-width / 2, 0, width / 2],
+        outputRange: [1, 0.9, 1],
+        extrapolate: 'clamp',
+    });
+
     const nextCardStyle = {
         transform: [
-            {
-                scale: position.x.interpolate({
-                    inputRange: [-width / 2, 0, width / 2],
-                    outputRange: [1, 0.9, 1],
-                    extrapolate: 'clamp',
-                })
-            },
+            { translateY: nextCardTranslateY },
+            { scale: nextCardScale }
         ],
-        opacity: position.x.interpolate({
-            inputRange: [-width / 2, 0, width / 2],
-            outputRange: [1, 0.5, 1],
-            extrapolate: 'clamp',
-        }),
     };
 
-    const renderCard = (item: typeof recommendations[0], index: number) => {
-        if (index < currentIndex || index > currentIndex + 1) return null;
+    // Prepare next index for rendering
+    const nextIndex = (currentIndex + 1) % recommendations.length;
 
-        if (index === currentIndex) {
-            return (
-                <Animated.View
-                    key={item.id}
-                    style={[styles.card, cardStyle]}
-                    {...panResponder.panHandlers}
+    const renderCurrentCard = () => {
+        const item = recommendations[currentIndex];
+        return (
+            <Animated.View
+                key={`current-${item.id}`}
+                style={[styles.card, cardStyle]}
+                {...panResponder.panHandlers}
+            >
+                <Image source={{ uri: item.image }} style={styles.cardImage} />
+                <LinearGradient
+                    colors={['transparent', 'rgba(0,0,0,0.8)']}
+                    style={styles.cardGradient}
                 >
-                    <Image source={{ uri: item.image }} style={styles.cardImage} />
-                    <LinearGradient
-                        colors={['transparent', 'rgba(0,0,0,0.8)']}
-                        style={styles.cardGradient}
-                    >
-                        <View style={styles.cardContent}>
-                            <Text style={styles.cardTitle}>{item.title}</Text>
-                            <View style={styles.cardMeta}>
-                                <Text style={styles.cardType}>{item.type}</Text>
-                                <Text style={styles.cardDot}>•</Text>
-                                <Text style={styles.cardYear}>{item.year}</Text>
-                                <Text style={styles.cardDot}>•</Text>
-                                <View style={styles.ratingContainer}>
-                                    <Ionicons name="star" size={16} color="#FFD700" />
-                                    <Text style={styles.cardRating}>{item.rating}</Text>
-                                </View>
-                            </View>
-                            <Text style={styles.cardDescription}>{item.description}</Text>
-                            <Pressable
-                                style={styles.chatButton}
-                                onPress={() => router.push(`/chat/${item.id}` as any)}
-                            >
-                                <Text style={styles.chatButtonText}>Chat about this</Text>
-                                <Ionicons name="chatbubble" size={16} color="white" />
-                            </Pressable>
-                        </View>
-                    </LinearGradient>
-                </Animated.View>
-            );
-        } else {
-            // Next card (partially visible)
-            return (
-                <Animated.View
-                    key={item.id}
-                    style={[styles.card, styles.nextCard, nextCardStyle]}
-                >
-                    <Image source={{ uri: item.image }} style={styles.cardImage} />
-                    <LinearGradient
-                        colors={['transparent', 'rgba(0,0,0,0.8)']}
-                        style={styles.cardGradient}
-                    >
-                        <View style={styles.cardContent}>
-                            <Text style={styles.cardTitle}>{item.title}</Text>
-                            <View style={styles.cardMeta}>
-                                <Text style={styles.cardType}>{item.type}</Text>
-                                <Text style={styles.cardDot}>•</Text>
-                                <Text style={styles.cardYear}>{item.year}</Text>
+                    <View style={styles.cardContent}>
+                        <Text style={styles.cardTitle}>{item.title}</Text>
+                        <View style={styles.cardMeta}>
+                            <Text style={styles.cardType}>{item.type}</Text>
+                            <Text style={styles.cardDot}>•</Text>
+                            <Text style={styles.cardYear}>{item.year}</Text>
+                            <Text style={styles.cardDot}>•</Text>
+                            <View style={styles.ratingContainer}>
+                                <Ionicons name="star" size={16} color="#FFD700" />
+                                <Text style={styles.cardRating}>{item.rating}</Text>
                             </View>
                         </View>
-                    </LinearGradient>
-                </Animated.View>
-            );
-        }
+                        <Text style={styles.cardDescription}>{item.description}</Text>
+                        <Pressable
+                            style={styles.chatButton}
+                            onPress={() => router.push(`/chat/${item.id}` as any)}
+                        >
+                            <Text style={styles.chatButtonText}>Chat about this</Text>
+                            <Ionicons name="chatbubble" size={16} color="white" />
+                        </Pressable>
+                    </View>
+                </LinearGradient>
+            </Animated.View>
+        );
+    };
+
+    const renderNextCard = () => {
+        const item = recommendations[nextIndex];
+        return (
+            <Animated.View
+                key={`next-${item.id}`}
+                style={[styles.card, styles.nextCard, nextCardStyle]}
+            >
+                <Image source={{ uri: item.image }} style={styles.cardImage} />
+                <LinearGradient
+                    colors={['transparent', 'rgba(0,0,0,0.8)']}
+                    style={styles.cardGradient}
+                >
+                    <View style={styles.cardContent}>
+                        <Text style={styles.cardTitle}>{item.title}</Text>
+                        <View style={styles.cardMeta}>
+                            <Text style={styles.cardType}>{item.type}</Text>
+                            <Text style={styles.cardDot}>•</Text>
+                            <Text style={styles.cardYear}>{item.year}</Text>
+                        </View>
+                    </View>
+                </LinearGradient>
+            </Animated.View>
+        );
     };
 
     return (
@@ -223,13 +245,15 @@ export default function RecommendationsScreen() {
             </View>
 
             <View style={styles.cardsContainer}>
-                {recommendations.map((item, index) => renderCard(item, index))}
+                {renderNextCard()}
+                {renderCurrentCard()}
             </View>
 
             <View style={styles.actionsContainer}>
                 <Pressable
                     style={[styles.actionButton, styles.dislikeButton]}
                     onPress={swipeLeft}
+                    disabled={isTransitioning}
                 >
                     <Ionicons name="close" size={30} color="white" />
                 </Pressable>
@@ -237,6 +261,7 @@ export default function RecommendationsScreen() {
                 <Pressable
                     style={[styles.actionButton, styles.likeButton]}
                     onPress={swipeRight}
+                    disabled={isTransitioning}
                 >
                     <Ionicons name="heart" size={30} color="white" />
                 </Pressable>
