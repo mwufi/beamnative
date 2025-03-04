@@ -89,28 +89,61 @@ export default function RecommendationsScreen() {
 
     const panResponder = useRef(
         PanResponder.create({
-            onStartShouldSetPanResponder: () => !isTransitioning,
-            onMoveShouldSetPanResponder: () => !isTransitioning,
+            // Always claim responder status to prevent propagation to parent views
+            onStartShouldSetPanResponder: () => true,
+            onStartShouldSetPanResponderCapture: () => true,
+            onMoveShouldSetPanResponder: () => true,
+            onMoveShouldSetPanResponderCapture: () => true,
+
+            onPanResponderGrant: () => {
+                // No need to do anything on grant
+            },
             onPanResponderMove: (_, gesture) => {
-                position.setValue({ x: gesture.dx, y: gesture.dy });
+                // Only handle horizontal movements for card swiping
+                // Vertical movements are captured but not used
+                if (Math.abs(gesture.dx) > Math.abs(gesture.dy)) {
+                    position.setValue({ x: gesture.dx, y: 0 }); // No vertical movement for cards
+                }
             },
             onPanResponderRelease: (_, gesture) => {
-                if (gesture.dx > SWIPE_THRESHOLD) {
-                    // Swiped right (like)
-                    swipeRight();
-                } else if (gesture.dx < -SWIPE_THRESHOLD) {
-                    // Swiped left (dislike)
-                    swipeLeft();
+                // Only trigger swipe actions if the gesture was primarily horizontal
+                if (Math.abs(gesture.dx) > Math.abs(gesture.dy)) {
+                    if (gesture.dx > SWIPE_THRESHOLD) {
+                        // Swiped right (like)
+                        swipeRight();
+                    } else if (gesture.dx < -SWIPE_THRESHOLD) {
+                        // Swiped left (dislike)
+                        swipeLeft();
+                    } else {
+                        // Return to center with spring animation
+                        Animated.spring(position, {
+                            toValue: { x: 0, y: 0 },
+                            friction: 7,
+                            tension: 40,
+                            useNativeDriver: true,
+                        }).start();
+                    }
                 } else {
-                    // Return to center
+                    // If it was primarily a vertical gesture, just reset the card position
                     Animated.spring(position, {
                         toValue: { x: 0, y: 0 },
-                        friction: Platform.OS === 'ios' ? 7 : 5,
+                        friction: 7,
                         tension: 40,
-                        useNativeDriver: Platform.OS === 'ios',
+                        useNativeDriver: true,
                     }).start();
                 }
             },
+            onPanResponderTerminate: () => {
+                // If the gesture is terminated for any reason, reset position
+                Animated.spring(position, {
+                    toValue: { x: 0, y: 0 },
+                    friction: 7,
+                    tension: 40,
+                    useNativeDriver: true,
+                }).start();
+            },
+            // Prevent the gesture from bubbling to parent views
+            onPanResponderTerminationRequest: () => false
         })
     ).current;
 
@@ -119,9 +152,9 @@ export default function RecommendationsScreen() {
         setIsTransitioning(true);
 
         Animated.timing(position, {
-            toValue: { x: width + 100, y: 0 },
-            duration: 250,
-            useNativeDriver: Platform.OS === 'ios',
+            toValue: { x: width * 1.5, y: 0 },
+            duration: 300,
+            useNativeDriver: true,
         }).start(() => {
             // Move to next card
             setCurrentIndex((prevIndex) => (prevIndex + 1) % recommendations.length);
@@ -133,9 +166,9 @@ export default function RecommendationsScreen() {
         setIsTransitioning(true);
 
         Animated.timing(position, {
-            toValue: { x: -width - 100, y: 0 },
-            duration: 250,
-            useNativeDriver: Platform.OS === 'ios',
+            toValue: { x: -width * 1.5, y: 0 },
+            duration: 300,
+            useNativeDriver: true,
         }).start(() => {
             // Move to next card
             setCurrentIndex((prevIndex) => (prevIndex + 1) % recommendations.length);
@@ -173,6 +206,19 @@ export default function RecommendationsScreen() {
     // Prepare next index for rendering
     const nextIndex = (currentIndex + 1) % recommendations.length;
 
+    // Like/dislike indicators
+    const likeOpacity = position.x.interpolate({
+        inputRange: [0, width / 4],
+        outputRange: [0, 1],
+        extrapolate: 'clamp',
+    });
+
+    const dislikeOpacity = position.x.interpolate({
+        inputRange: [-width / 4, 0],
+        outputRange: [1, 0],
+        extrapolate: 'clamp',
+    });
+
     const renderCurrentCard = () => {
         const item = recommendations[currentIndex];
         return (
@@ -180,13 +226,35 @@ export default function RecommendationsScreen() {
                 key={`current-${item.id}`}
                 style={[styles.card, cardStyle]}
                 {...panResponder.panHandlers}
+                pointerEvents="box-only"
             >
-                <Image source={{ uri: item.image }} style={styles.cardImage} />
+                <Image
+                    source={{ uri: item.image }}
+                    style={styles.cardImage}
+                />
+
+                {/* Like indicator */}
+                <Animated.View
+                    style={[styles.indicatorContainer, styles.likeIndicator, { opacity: likeOpacity }]}
+                    pointerEvents="none"
+                >
+                    <Ionicons name="heart" size={80} color="white" />
+                </Animated.View>
+
+                {/* Dislike indicator */}
+                <Animated.View
+                    style={[styles.indicatorContainer, styles.dislikeIndicator, { opacity: dislikeOpacity }]}
+                    pointerEvents="none"
+                >
+                    <Ionicons name="close" size={80} color="white" />
+                </Animated.View>
+
                 <LinearGradient
                     colors={['transparent', 'rgba(0,0,0,0.8)']}
                     style={styles.cardGradient}
+                    pointerEvents="none"
                 >
-                    <View style={styles.cardContent}>
+                    <View style={styles.cardContent} pointerEvents="box-none">
                         <Text style={styles.cardTitle}>{item.title}</Text>
                         <View style={styles.cardMeta}>
                             <Text style={styles.cardType}>{item.type}</Text>
@@ -218,6 +286,7 @@ export default function RecommendationsScreen() {
             <Animated.View
                 key={`next-${item.id}`}
                 style={[styles.card, styles.nextCard, nextCardStyle]}
+                pointerEvents="none"
             >
                 <Image source={{ uri: item.image }} style={styles.cardImage} />
                 <LinearGradient
@@ -244,14 +313,21 @@ export default function RecommendationsScreen() {
                 <Text style={styles.headerSubtitle}>Swipe to browse</Text>
             </View>
 
-            <View style={styles.cardsContainer}>
+            {/* Card container with gesture handling */}
+            <View
+                style={styles.cardsContainer}
+                // This prevents touch events from propagating through to the underlying sheet
+                onStartShouldSetResponder={() => true}
+                onMoveShouldSetResponder={() => true}
+                onResponderTerminationRequest={() => false}
+            >
                 {renderNextCard()}
                 {renderCurrentCard()}
             </View>
 
             <View style={styles.actionsContainer}>
                 <Pressable
-                    style={[styles.actionButton, styles.dislikeButton]}
+                    style={[styles.actionButton, styles.dislikeButton, isTransitioning && styles.disabledButton]}
                     onPress={swipeLeft}
                     disabled={isTransitioning}
                 >
@@ -259,7 +335,7 @@ export default function RecommendationsScreen() {
                 </Pressable>
 
                 <Pressable
-                    style={[styles.actionButton, styles.likeButton]}
+                    style={[styles.actionButton, styles.likeButton, isTransitioning && styles.disabledButton]}
                     onPress={swipeRight}
                     disabled={isTransitioning}
                 >
@@ -305,6 +381,7 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
+        width: '100%', // Ensure it covers the full width
     },
     card: {
         width: CARD_WIDTH,
@@ -428,5 +505,27 @@ const styles = StyleSheet.create({
     progressDotActive: {
         backgroundColor: 'white',
         width: 16,
+    },
+    indicatorContainer: {
+        position: 'absolute',
+        top: 50,
+        zIndex: 10,
+        padding: 10,
+        borderWidth: 4,
+        borderRadius: 10,
+        backgroundColor: 'rgba(0,0,0,0.2)',
+    },
+    likeIndicator: {
+        right: 20,
+        borderColor: '#2ecc71',
+        transform: [{ rotate: '10deg' }],
+    },
+    dislikeIndicator: {
+        left: 20,
+        borderColor: '#e74c3c',
+        transform: [{ rotate: '-10deg' }],
+    },
+    disabledButton: {
+        opacity: 0.5,
     },
 }); 
