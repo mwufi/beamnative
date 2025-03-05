@@ -25,6 +25,8 @@ import * as FileSystem from 'expo-file-system';
 import { Audio } from 'expo-av';
 import VoiceRecorderLive from '@/components/VoiceRecorderLive';
 import AudioMessagePlayer from '@/components/AudioMessagePlayer';
+import React from 'react';
+import AttachmentPreview, { Attachment } from '@/components/AttachmentPreview';
 
 // Custom hook for haptic feedback that checks platform
 const useHaptics = () => {
@@ -100,6 +102,7 @@ export default function AraChat() {
     const [showMediaOptions, setShowMediaOptions] = useState(false);
     const [isRecording, setIsRecording] = useState(false);
     const [isPickerActive, setIsPickerActive] = useState(false);
+    const [pendingAttachments, setPendingAttachments] = useState<Attachment[]>([]);
 
     const scrollViewRef = useRef<ScrollView>(null);
     const router = useRouter();
@@ -137,63 +140,80 @@ export default function AraChat() {
     }, []);
 
     const handleSendText = () => {
-        if (inputText.trim() === '') return;
+        if (inputText.trim() === '' && pendingAttachments.length === 0) return;
 
-        // Prevent sending if we're already loading
-        if (isLoading) return;
+        // If we have multiple attachments, send them as separate messages
+        if (pendingAttachments.length > 0) {
+            // First send any text message if there is text
+            if (inputText.trim() !== '') {
+                const textMessage: Message = {
+                    id: Date.now().toString(),
+                    type: 'text',
+                    content: inputText.trim(),
+                    sender: 'user',
+                    timestamp: new Date(),
+                };
+                setMessages(prev => [...prev, textMessage]);
+            }
 
-        // Add user message
-        const userMessage: Message = {
-            id: Date.now().toString(),
-            type: 'text',
-            content: inputText,
-            sender: 'user',
-            timestamp: new Date(),
-        };
+            // Then send each attachment as a separate message
+            pendingAttachments.forEach((attachment, index) => {
+                const attachmentMessage: Message = {
+                    id: (Date.now() + index + 1).toString(),
+                    type: attachment.type,
+                    content: attachment.type === 'file' ? 'File' : 'Image',
+                    sender: 'user',
+                    timestamp: new Date(Date.now() + index * 100), // Slight time difference for ordering
+                    uri: attachment.uri,
+                };
 
-        // Store the input text before clearing it
-        const textToRespond = inputText;
+                if (attachment.type === 'file') {
+                    attachmentMessage.fileName = attachment.fileName;
+                    attachmentMessage.fileSize = attachment.fileSize;
+                    attachmentMessage.fileType = attachment.fileType;
+                }
 
-        // Update UI
-        setMessages(prev => [...prev, userMessage]);
+                setMessages(prev => [...prev, attachmentMessage]);
+            });
+        } else {
+            // Just a text message
+            const textMessage: Message = {
+                id: Date.now().toString(),
+                type: 'text',
+                content: inputText.trim(),
+                sender: 'user',
+                timestamp: new Date(),
+            };
+            setMessages(prev => [...prev, textMessage]);
+        }
+
+        // Clear input and pending attachments
         setInputText('');
-        setIsLoading(true);
+        setPendingAttachments([]);
 
         // Scroll to bottom
         setTimeout(() => {
-            if (scrollViewRef.current) {
-                scrollViewRef.current.scrollToEnd({ animated: true });
-            }
+            scrollViewRef.current?.scrollToEnd({ animated: true });
         }, 100);
 
-        // Simulate response after a delay
-        setTimeout(() => {
-            try {
-                const response: Message = {
-                    id: (Date.now() + 1).toString(),
-                    type: 'text',
-                    content: getResponse(textToRespond),
-                    sender: 'ara',
-                    timestamp: new Date(),
-                };
-
+        // Only get AI response if there's text content
+        if (inputText.trim() !== '') {
+            // Simulate AI response
+            setIsLoading(true);
+            setTimeout(() => {
+                const response = getResponse(inputText);
                 setMessages(prev => [...prev, response]);
                 setIsLoading(false);
 
                 // Scroll to bottom again after response
                 setTimeout(() => {
-                    if (scrollViewRef.current) {
-                        scrollViewRef.current.scrollToEnd({ animated: true });
-                    }
+                    scrollViewRef.current?.scrollToEnd({ animated: true });
                 }, 100);
+            }, 1500);
+        }
 
-                // Haptic feedback when response arrives
-                triggerHaptic('success');
-            } catch (error) {
-                console.error('Error generating response:', error);
-                setIsLoading(false);
-            }
-        }, 1500);
+        // Haptic feedback
+        triggerHaptic('light');
     };
 
     const handleImagePicker = async () => {
@@ -207,29 +227,13 @@ export default function AraChat() {
         setIsPickerActive(true);
 
         try {
-            // Check permissions first on iOS
-            if (Platform.OS === 'ios') {
-                const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-                if (status !== 'granted') {
-                    Alert.alert(
-                        'Permission Required',
-                        'We need camera roll permissions to access your photos.',
-                        [{ text: 'OK' }]
-                    );
-                    setIsPickerActive(false);
-                    return;
-                }
-            }
-
             // Add a small delay to ensure the media options modal is fully closed
             await new Promise(resolve => setTimeout(resolve, 300));
 
             const result = await ImagePicker.launchImageLibraryAsync({
-                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                mediaTypes: ImagePicker.MediaTypeOptions.All,
                 allowsEditing: true,
                 quality: 0.8,
-                // Ensure we don't lose focus on iOS
-                presentationStyle: Platform.OS === 'ios' ? ImagePicker.UIImagePickerPresentationStyle.FULL_SCREEN : undefined,
             });
 
             // Reset picker state
@@ -237,61 +241,16 @@ export default function AraChat() {
 
             if (!result.canceled && result.assets && result.assets.length > 0) {
                 const asset = result.assets[0];
-                let fileSize: number | undefined = undefined;
 
-                // Platform-specific file info handling
-                if (Platform.OS !== 'web') {
-                    try {
-                        const fileInfo = await FileSystem.getInfoAsync(asset.uri);
-                        fileSize = fileInfo.exists ? fileInfo.size : undefined;
-                    } catch (error) {
-                        console.error('Error getting file info:', error);
+                // Add to pending attachments instead of replacing
+                setPendingAttachments(prev => [
+                    ...prev,
+                    {
+                        id: Date.now().toString(),
+                        type: 'image',
+                        uri: asset.uri,
                     }
-                } else {
-                    // For web, we can use the asset's fileSize if available
-                    fileSize = asset.fileSize;
-                }
-
-                // Add image message
-                const imageMessage: Message = {
-                    id: Date.now().toString(),
-                    type: 'image',
-                    content: 'Image',
-                    uri: asset.uri,
-                    sender: 'user',
-                    timestamp: new Date(),
-                    fileSize: fileSize,
-                    fileType: 'image',
-                };
-
-                setMessages(prev => [...prev, imageMessage]);
-
-                // Scroll to bottom
-                setTimeout(() => {
-                    scrollViewRef.current?.scrollToEnd({ animated: true });
-                }, 100);
-
-                // Simulate response
-                setIsLoading(true);
-                setTimeout(() => {
-                    const response: Message = {
-                        id: (Date.now() + 1).toString(),
-                        type: 'text',
-                        content: "I've received your image. It looks great!",
-                        sender: 'ara',
-                        timestamp: new Date(),
-                    };
-
-                    setMessages(prev => [...prev, response]);
-                    setIsLoading(false);
-
-                    // Scroll to bottom again after response
-                    setTimeout(() => {
-                        scrollViewRef.current?.scrollToEnd({ animated: true });
-                    }, 100);
-
-                    triggerHaptic('success');
-                }, 1500);
+                ]);
             }
         } catch (error) {
             console.error('Error picking image:', error);
@@ -321,56 +280,24 @@ export default function AraChat() {
             const result = await DocumentPicker.getDocumentAsync({
                 type: '*/*',
                 copyToCacheDirectory: true,
+                multiple: true, // Enable multiple file selection
             });
 
             // Reset picker state
             setIsPickerActive(false);
 
             if (result.canceled === false && result.assets && result.assets.length > 0) {
-                const asset = result.assets[0];
-                let fileSize = asset.size;
-
-                // Add file message
-                const fileMessage: Message = {
-                    id: Date.now().toString(),
-                    type: 'file',
-                    content: 'File',
+                // Add all selected files to pending attachments
+                const newAttachments = result.assets.map(asset => ({
+                    id: Date.now() + Math.random().toString(),
+                    type: 'file' as const,
                     uri: asset.uri,
                     fileName: asset.name,
-                    fileSize: fileSize,
+                    fileSize: asset.size,
                     fileType: asset.mimeType,
-                    sender: 'user',
-                    timestamp: new Date(),
-                };
+                }));
 
-                setMessages(prev => [...prev, fileMessage]);
-
-                // Scroll to bottom
-                setTimeout(() => {
-                    scrollViewRef.current?.scrollToEnd({ animated: true });
-                }, 100);
-
-                // Simulate response
-                setIsLoading(true);
-                setTimeout(() => {
-                    const response: Message = {
-                        id: (Date.now() + 1).toString(),
-                        type: 'text',
-                        content: `I've received your file: ${asset.name}`,
-                        sender: 'ara',
-                        timestamp: new Date(),
-                    };
-
-                    setMessages(prev => [...prev, response]);
-                    setIsLoading(false);
-
-                    // Scroll to bottom again after response
-                    setTimeout(() => {
-                        scrollViewRef.current?.scrollToEnd({ animated: true });
-                    }, 100);
-
-                    triggerHaptic('success');
-                }, 1500);
+                setPendingAttachments(prev => [...prev, ...newAttachments]);
             }
         } catch (error) {
             console.error('Error picking file:', error);
@@ -383,23 +310,42 @@ export default function AraChat() {
         }
     };
 
+    const handleRemoveAttachment = (id: string) => {
+        setPendingAttachments(prev => prev.filter(a => a.id !== id));
+        triggerHaptic('light');
+    };
+
+    const handleClearAllAttachments = () => {
+        setPendingAttachments([]);
+        triggerHaptic('medium');
+    };
+
     // Simple mock response function
-    const getResponse = (input: string) => {
+    const getResponse = (input: string): Message => {
         const lowerInput = input.toLowerCase();
+        let content: string;
 
         if (lowerInput.includes('hello') || lowerInput.includes('hi')) {
-            return "Hello there! How can I assist you today?";
+            content = "Hello there! How can I assist you today?";
         } else if (lowerInput.includes('how are you')) {
-            return "I'm doing well, thank you for asking! I'm here to help you with whatever you need.";
+            content = "I'm doing well, thank you for asking! I'm here to help you with whatever you need.";
         } else if (lowerInput.includes('weather')) {
-            return "I don't have real-time weather data, but I can help you find a weather app or website to check the forecast.";
+            content = "I don't have real-time weather data, but I can help you find a weather app or website to check the forecast.";
         } else if (lowerInput.includes('recommend') || lowerInput.includes('suggestion')) {
-            return "Based on your interests, I'd recommend checking out 'The Midnight Library' by Matt Haig. It's a thought-provoking novel about the choices we make in life.";
+            content = "Based on your interests, I'd recommend checking out 'The Midnight Library' by Matt Haig. It's a thought-provoking novel about the choices we make in life.";
         } else if (lowerInput.includes('thank')) {
-            return "You're welcome! Feel free to ask if you need anything else.";
+            content = "You're welcome! Feel free to ask if you need anything else.";
         } else {
-            return "That's an interesting question. While I don't have all the information right now, I'm designed to learn and help you connect with the world. Is there something specific you'd like to know more about?";
+            content = "That's an interesting question. While I don't have all the information right now, I'm designed to learn and help you connect with the world. Is there something specific you'd like to know more about?";
         }
+
+        return {
+            id: (Date.now() + 1).toString(),
+            type: 'text',
+            content,
+            sender: 'ara',
+            timestamp: new Date(),
+        };
     };
 
     const formatTime = (date: Date) => {
@@ -544,6 +490,8 @@ export default function AraChat() {
             <View style={styles.header}>
                 <LinearGradient
                     colors={['#8e44ad', '#3498db']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
                     style={styles.avatar}
                 >
                     <Text style={styles.avatarText}>A</Text>
@@ -590,49 +538,57 @@ export default function AraChat() {
                     onCancel={handleCancelRecording}
                 />
             ) : (
-                <BlurView intensity={30} tint="dark" style={styles.inputContainer}>
-                    <TouchableOpacity
-                        style={styles.mediaButton}
-                        onPress={() => setShowMediaOptions(true)}
-                    >
-                        <Ionicons name="add" size={24} color="white" />
-                    </TouchableOpacity>
-
-                    <TextInput
-                        style={styles.input}
-                        placeholder="Message Ara..."
-                        placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                        value={inputText}
-                        onChangeText={setInputText}
-                        multiline
-                        maxLength={1000}
-                        returnKeyType="default"
+                <>
+                    <AttachmentPreview
+                        attachments={pendingAttachments}
+                        onRemoveAttachment={handleRemoveAttachment}
+                        onClearAllAttachments={handleClearAllAttachments}
+                        formatFileSize={formatFileSize}
                     />
-
-                    {inputText.trim() === '' ? (
+                    <BlurView intensity={30} tint="dark" style={styles.inputContainer}>
                         <TouchableOpacity
-                            style={styles.micButton}
-                            onPress={() => setIsRecording(true)}
+                            style={styles.mediaButton}
+                            onPress={() => setShowMediaOptions(true)}
                         >
-                            <Ionicons name="mic" size={20} color="white" />
+                            <Ionicons name="add" size={24} color="white" />
                         </TouchableOpacity>
-                    ) : (
-                        <Pressable
-                            style={({ pressed }) => [
-                                styles.sendButton,
-                                { opacity: pressed ? 0.8 : 1 }
-                            ]}
-                            onPress={handleSendText}
-                            disabled={isLoading}
-                        >
-                            <Ionicons
-                                name="send"
-                                size={20}
-                                color={isLoading ? 'rgba(255, 255, 255, 0.4)' : 'white'}
-                            />
-                        </Pressable>
-                    )}
-                </BlurView>
+
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Message Ara..."
+                            placeholderTextColor="rgba(255, 255, 255, 0.4)"
+                            value={inputText}
+                            onChangeText={setInputText}
+                            multiline
+                            maxLength={1000}
+                            returnKeyType="default"
+                        />
+
+                        {inputText.trim() === '' && pendingAttachments.length === 0 ? (
+                            <TouchableOpacity
+                                style={styles.micButton}
+                                onPress={() => setIsRecording(true)}
+                            >
+                                <Ionicons name="mic" size={20} color="white" />
+                            </TouchableOpacity>
+                        ) : (
+                            <Pressable
+                                style={({ pressed }) => [
+                                    styles.sendButton,
+                                    { opacity: pressed ? 0.8 : 1 }
+                                ]}
+                                onPress={handleSendText}
+                                disabled={isLoading}
+                            >
+                                <Ionicons
+                                    name="send"
+                                    size={20}
+                                    color={isLoading ? 'rgba(255, 255, 255, 0.4)' : 'white'}
+                                />
+                            </Pressable>
+                        )}
+                    </BlurView>
+                </>
             )}
 
             {/* Media options modal */}
@@ -737,9 +693,9 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: 20,
-        marginRight: 12,
         justifyContent: 'center',
         alignItems: 'center',
+        marginRight: 12,
     },
     avatarText: {
         color: 'white',
