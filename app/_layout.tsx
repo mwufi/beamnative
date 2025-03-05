@@ -1,8 +1,8 @@
+import React, { useEffect } from 'react';
 import { Tabs } from 'expo-router';
 import { useColorScheme } from 'react-native';
 import { useFonts } from 'expo-font';
 import { SplashScreen, Stack } from 'expo-router';
-import { useEffect } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -65,6 +65,14 @@ function RootLayoutNav() {
                     },
                     headerTintColor: '#fff',
                     presentation: 'modal',
+                }} />
+                <Stack.Screen name="tasks/index" options={{
+                    headerShown: false,
+                    contentStyle: { backgroundColor: '#000' },
+                }} />
+                <Stack.Screen name="tasks/[id]" options={{
+                    headerShown: false,
+                    contentStyle: { backgroundColor: '#000' },
                 }} />
             </Stack>
         </>

@@ -112,7 +112,9 @@ export default function HomeScreen() {
             {/* Todo Card */}
             <Pressable
                 style={styles.card}
-                onPress={() => router.push('/chat/todos' as any)}
+                onPress={() => {
+                    router.push('/tasks');
+                }}
             >
                 <LinearGradient
                     colors={['#2c3e50', '#1a1a2e']}
