@@ -74,6 +74,31 @@ function RootLayoutNav() {
                     headerShown: false,
                     contentStyle: { backgroundColor: '#000' },
                 }} />
+                <Stack.Screen
+                    name="ara/index"
+                    options={{
+                        headerShown: false,
+                    }}
+                />
+                <Stack.Screen
+                    name="ara/chat"
+                    options={{
+                        headerShown: false,
+                        presentation: 'modal',
+                    }}
+                />
+                <Stack.Screen
+                    name="ara/labs"
+                    options={{
+                        headerShown: false,
+                    }}
+                />
+                <Stack.Screen
+                    name="ara/create"
+                    options={{
+                        headerShown: false,
+                    }}
+                />
             </Stack>
         </>
     );
